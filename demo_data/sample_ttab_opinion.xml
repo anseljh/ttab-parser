@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ttab-document>
+    <document type="opinion">
+        <case-number>91234567</case-number>
+        <proceeding-type>opposition</proceeding-type>
+        <case-title>ABC Corporation v. XYZ Industries, Inc.</case-title>
+        <filing-date>2024-01-15</filing-date>
+        <decision-date>2024-08-01</decision-date>
+        
+        <parties>
+            <party type="applicant">
+                <name>XYZ Industries, Inc.</name>
+                <address>123 Main Street, Los Angeles, CA 90210</address>
+                <country>US</country>
+                <attorney>
+                    <name>John Smith</name>
+                    <registration-number>12345</registration-number>
+                    <firm>Smith &amp; Associates Law Firm</firm>
+                    <address>456 Legal Blvd, Los Angeles, CA 90211</address>
+                </attorney>
+            </party>
+            <party type="opposer">
+                <name>ABC Corporation</name>
+                <address>789 Corporate Way, New York, NY 10001</address>
+                <country>US</country>
+                <attorney>
+                    <name>Jane Johnson</name>
+                    <registration-number>67890</registration-number>
+                    <firm>Johnson Legal Group</firm>
+                    <address>321 Law Street, New York, NY 10002</address>
+                </attorney>
+            </party>
+        </parties>
+        
+        <judges>
+            <judge>
+                <name>Administrative Trademark Judge Sarah Wilson</name>
+                <title>Administrative Trademark Judge</title>
+                <role>presiding</role>
+            </judge>
+            <judge>
+                <name>Administrative Trademark Judge Michael Davis</name>
+                <title>Administrative Trademark Judge</title>
+                <role>panel member</role>
+            </judge>
+        </judges>
+        
+        <trademark-marks>
+            <mark type="applicant">
+                <mark-text>TECHNOVATE</mark-text>
+                <application-number>88123456</application-number>
+                <goods-services>Computer software for data analysis</goods-services>
+                <classes>42</classes>
+            </mark>
+            <mark type="opposer">
+                <mark-text>TECHNO</mark-text>
+                <registration-number>5123456</registration-number>
+                <goods-services>Computer software</goods-services>
+                <classes>42</classes>
+            </mark>
+        </trademark-marks>
+        
+        <decision>
+            <outcome>dismissed</outcome>
+            <description>Opposition is dismissed. Applicant's mark TECHNOVATE is sufficiently different from opposer's TECHNO mark.</description>
+            <winner>applicant</winner>
+        </decision>
+        
+        <appeal-indicators>
+            <text>Opposer may appeal this decision to the United States Court of Appeals for the Federal Circuit</text>
+        </appeal-indicators>
+    </document>
+</ttab-document>
