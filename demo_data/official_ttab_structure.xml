@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ttab-proceedings>
+  <version>
+    <version-no>1.0</version-no>
+    <version-date>20240801</version-date>
+  </version>
+  <action-key-code>DA</action-key-code>
+  <transaction-date>20240801</transaction-date>
+  
+  <proceeding-information>
+    <data-available-code>Y</data-available-code>
+    
+    <proceeding-entry>
+      <number>91234567</number>
+      <type-code>OPP</type-code>
+      <filing-date>20240115</filing-date>
+      <status-code>4</status-code>
+      <status-update-date>20240801</status-update-date>
+      
+      <party-information>
+        <party>
+          <identifier>12345001</identifier>
+          <role-code>D</role-code>
+          <name>XYZ Industries, Inc.</name>
+          <orgname>XYZ Industries, Inc.</orgname>
+          <address-information>
+            <proceeding-address>
+              <type-code>O</type-code>
+              <name>XYZ Industries, Inc.</name>
+              <orgname>Technology Company</orgname>
+              <street-address>123 Main Street</street-address>
+              <city>Los Angeles</city>
+              <state>CA</state>
+              <postal-code>90210</postal-code>
+              <country-code>US</country-code>
+            </proceeding-address>
+          </address-information>
+          <attorney-information>
+            <attorney>
+              <name>John Smith</name>
+              <registration-number>12345</registration-number>
+              <firm>Smith &amp; Associates Law Firm</firm>
+            </attorney>
+          </attorney-information>
+          <property-information>
+            <property>
+              <identifier>87654321</identifier>
+              <serial-number>88123456</serial-number>
+              <mark-text>TECHNOVATE</mark-text>
+            </property>
+          </property-information>
+        </party>
+        
+        <party>
+          <identifier>12345002</identifier>
+          <role-code>P</role-code>
+          <name>ABC Corporation</name>
+          <orgname>ABC Corporation</orgname>
+          <address-information>
+            <proceeding-address>
+              <type-code>O</type-code>
+              <name>ABC Corporation</name>
+              <street-address>789 Corporate Way</street-address>
+              <city>New York</city>
+              <state>NY</state>
+              <postal-code>10001</postal-code>
+              <country-code>US</country-code>
+            </proceeding-address>
+          </address-information>
+          <attorney-information>
+            <attorney>
+              <name>Jane Johnson</name>
+              <registration-number>67890</registration-number>
+              <firm>Johnson Legal Group</firm>
+            </attorney>
+          </attorney-information>
+          <property-information>
+            <property>
+              <identifier>87654322</identifier>
+              <registration-number>5123456</registration-number>
+              <mark-text>TECHNO</mark-text>
+            </property>
+          </property-information>
+        </party>
+      </party-information>
+      
+      <prosecution-history>
+        <event>
+          <event-date>20240801</event-date>
+          <event-code>FINALDEC</event-code>
+          <event-description>Final Decision: Opposition Dismissed</event-description>
+          <judges>
+            <judge>
+              <name>Sarah Wilson</name>
+              <title>Administrative Trademark Judge</title>
+            </judge>
+            <judge>
+              <name>Michael Davis</name>
+              <title>Administrative Trademark Judge</title>
+            </judge>
+          </judges>
+          <decision-text>
+            Opposition is dismissed. Applicant's mark TECHNOVATE is sufficiently different from opposer's TECHNO mark to avoid likelihood of confusion. The marks differ in sound, appearance, and commercial impression.
+          </decision-text>
+        </event>
+      </prosecution-history>
+    </proceeding-entry>
+  </proceeding-information>
+</ttab-proceedings>

@@ -1,0 +1,541 @@
+
+--- Page 1 ---
+ TRADEMARK  TRIAL AND APPEAL BOA RD 
+XML DTD ELEMENT MAPPING DOCUMENTATION (V1.0 ) 
+ 
+TTAB PROCEEDINGS SECTION  
+XML Elements  TWTF Elements  Description  
+<ttab- 
+proceedings >  The < ttab-proceedings > element is 
+mandatory and will occur one time 
+identifying the beginning of a daily 
+Trademark Trial and Appeal Board 
+Proceeding Information . Contains extracted 
+Trademark Trial and Appeal Board 
+Proceeding Information per the spe cified 
+extraction date and action key 
+(weekly/annual extraction type).   Data group 
+containing the extraction type, extraction 
+date, and zero or more TTAB proceedings.  
+<ttab-proceedings > start and </ ttab-
+proceedings > end tags.  
+<version>   The <version> element is mandatory and 
+will occur one time between the <version> 
+start and </version> end tags identifying the 
+version number and version date of the 
+Trademark Trial and Appeal Board  DTD.  
+The version element will contain one 
+occurrence of the  version number and 
+version date elements.  
+<version -no>  The <version -no> element is mandatory and 
+will occur one time between the <version -
+no> start and </version -no> end tags 
+containing the version number of the 
+Trademark Trial and Appeal Board DTD.  
+Example:  the first production version will be 
+1.0   
+</version -no>   
+<version -date>   The <version -date> element is mandatory 
+and will occur one time between the 
+<version -date> start and </version -date> 
+end tags containing the date of  the 
+Trademark Trial and Appeal Board DTD, an 
+8-position numeric in the format 
+YYYYMMDD.   
+</version -date>    
+</version>    
+ FSEG – Does not 
+exist in XML  FILE SEGMENT – A four position 
+alphanumeric field identifying the file type. 
+Value is always “TKAB”  
+ KS – Does not exist in 
+XML KEY SEQUENCE – A six position numeric 
+field right justified with leading zeros. The 
+contents of this field will be the record count 
+within each proceeding number.  
+--- Page 2 ---
+TTAB PROCEEDINGS SECTION  
+XML Elements  TWTF Elements  Description  
+<action -key-code > KA The <action -key-code > element is 
+mandatory and will occur one time between 
+the < action -key-code > start and </ action -
+key-code > end tags .  A 2-position 
+alphanumeric field defining the type of file 
+extract. Valid types are:  “DA” for the daily 
+extract  and  “AN” for the annual extract . 
+</action -key-code >   
+ RECORD -TYPE - 
+Does not exist in XML  A four position alphabetic field identifying the 
+type of record.  All TTAB records will be 
+identified with a “TTAB” value within this 
+field.  
+<transaction -date> TRANS ACTION -
+DATE The < transaction -date> element is 
+mandatory and will occur one time between 
+the <transaction -date> start and 
+</transaction -date> end tags identifyi ng the 
+beginning of the TTAB xml  file.  The 
+<transaction -date> is the date that the data 
+was extracted.   An 8-position numeric fi eld 
+in the format YYYYMMDD.  
+</transaction -date>   
+TTAB PROCEEDINGS (PROCEEDING INFORMATION) SECTION  
+<proceeding -
+information>  (APPH)  The <proceeding -information>  element is 
+mandatory and will occur one time between 
+the <proceeding -information> start and 
+</proceedin g-information> end tags .  
+Contains the proceeding information for all 
+extracted entries.  Data group containing 
+one or more PROCEEDING_ENTRY 
+elements.  
+<data -available -code >  The < data-available -code > element is 
+optional and  will occ ur zero or 1 times 
+between the < data-available -code > start and 
+</data-available -code > end tags.  Indicate if 
+data is available.  
+</data -available -code >   
+<proceeding -entry>  (APPH)  The <proceeding -entry> element is optio nal 
+and will occur one  or more  time between the 
+<proceeding -entry > start and </proceeding -
+entry > end tags.   Contains a single 
+PROCEEDING_ENTRY definition.  Data 
+group containing the proceeding number, 
+proceeding type, filing date, status, status 
+date, purg e indicator, prosecution history 
+and party data related to a specific 
+proceeding.  
+PROCEEDING INFORMATION (PROCEEDING ENTRY) SECTION  
+--- Page 3 ---
+TTAB PROCEEDINGS SECTION  
+XML Elements  TWTF Elements  Description  
+<number>   PRCDNG -NUM  The <number> element is optional and will 
+occur zero or  more time between the 
+<number> start and </nu mber> end tags.  
+Uniquely identifies the particular proceeding 
+in which an application is involved. Assigned 
+by the Trademark Trial and Appeal Board 
+(TTAB).  
+ 
+An 8-position numeric field consisting of the 
+following in positions 1 -2: 
+“70”–“74” for *Ex Parte A ppeal  
+“91” for Opposition  
+“92” for Cancellation  
+“93” for Interference  
+“94” for Concurrent Use  
+Positions 3 -8 will contain a six position 
+sequential counter right justified with leading 
+zeros.  
+*For Ex Parte Appeals, positions 3 -8 will 
+contain the serial numb er of the application 
+as the proceeding number  
+</number>    
+<type -code>   The < type-code > element is optional and will 
+occur zero or more time between the < type-
+code > start and </ type-code > end tags. 
+Indicates the type of proceeding.   
+ 
+A 3-position alphan umeric field indicating 
+the type of proceeding.  
+ 
+Valid types are:  
+“EXT” for Extensions of Time to Oppose  
+“OPP” for Oppositions  
+“CAN” for Cancellations  
+“CNU” for Concurrent Use  
+“EXA” for Ex Parte Appeal  
+</type -code>    
+<filing -date>  DT-FIL The <filing -date> element is optional and will 
+occur zero or more time between the <filing -
+date> start and </filing -date> end tags. The 
+date on which the adversary proceeding was 
+filed.  An 8 -position numeric field in the 
+format YYYYMMDD. This field contains the 
+date on w hich the adversary proceeding was 
+filed.  
+</filing -date>    
+--- Page 4 ---
+TTAB PROCEEDINGS SECTION  
+XML Elements  TWTF Elements  Description  
+<employee -number>   The < employee -number > element is 
+optional and will occur zero or more time 
+between the <  employee -number > start and 
+</employee -number > end tags. A 5-position 
+numeric field whi ch assigned to the 
+proceeding case .  Is the Employee Number 
+of  Interlocutory Attorney.  
+</employee -number>    
+ <interlocutory -attorney -
+name>   The <interlocutory -attorney -name> element 
+is optional and will occur zero or more time 
+between the < interlocutory -attorney -name > 
+start and </ interlocutory -attorney -name > end 
+tags. This tag represents interlocutory 
+attorney name who assigned to the 
+proceeding case . 
+</interlocutory -attorney -
+name>    
+<location -code>   The < location -code > element is optional and 
+will occ ur zero or more time between the 
+<location -code > start and </ location -code > 
+end tags. A 3-position alphanumeric field 
+represents the location of physical 
+proceeding case.  
+</location -code>    
+<day -in-location>   The <day -in-location> element is optional 
+and will occur zero or more time between 
+the <day -in-location> start and </day -in-
+location> end tags. This tag represents a 
+date which is charged to location.  
+</day -in-location>    
+<charge -to-location -
+code>   The <charge -to-location -code> element is 
+optional  and will occur zero or more time 
+between the <charge -to-location -code> start 
+and </charge -to-location -code> end tags. 
+This tag represents a number that is used to 
+uniquely identify a location.  It defines the 
+location that the proceeding number  
+charged t o. 
+</charge -to-location -
+code>    
+<charge -to-employee -
+name>   The <charge -to-employee -name> element is 
+optional and will occur zero or more time 
+between the <charge -to-employee -name > 
+start and </ charge -to-employee -name > end 
+tags. This tag represents the nam e of the 
+employee that the physical proceeding case.  
+It defines the employee name  that the 
+proceeding number charged to.  
+--- Page 5 ---
+TTAB PROCEEDINGS SECTION  
+XML Elements  TWTF Elements  Description  
+</charge -to-employee -
+name>    
+<status -update -date>  DT-STAT  The <status -update -date> element is 
+optional and will occur zero or more time 
+between the <status -update -date> start and 
+</status -update -date> end tags. The date 
+that the status was last updated.  An 8 -
+position numeric field in the format 
+YYYYMMDD.  
+</status -update -date>    
+<status -code>  STAT  The <status -code> element is option al and 
+will occur zero or more time between the 
+<status -code> start and </status -code> end 
+tags. Indicates the prosecution status of a 
+proceeding.  
+ 
+A 2-position alphanumeric field indicating 
+the prosecution status of a proceeding.  
+ 
+Contains one of the stat us codes listed 
+below:  
+“1” for Not Instituted  
+“2” for Pending  
+“3” for Ready for Final Decision  
+“4” for Awaiting Expir. Of Appeal Period  
+“5” for Pending Reconsideration  
+“6” for Pending Reinstatement  
+“7” for Pending Court Appeal  
+“8” for Suspended  
+“9” for Ter minated  
+“A” for Consolidated Opposition  
+“B” for Opposition Dismissed as a Nullity  
+“C” for Cancellation Dismissed as a Nullity  
+“D” for CU Dissolved as a Nullity  
+“E” for Interference Dissolved as a Nullity  
+“F” for Extension Not Filed  
+“G” for Opposition Not F iled 
+“H” for Extension Filed Late  
+“I” for Opposition Filed Late  
+“J” for Premature Extension  
+“K” for Premature Opposition  
+“L” for Opposition Refused  
+“M” for Forwarded to Issuance of Reg/NOA  
+“N” for Appeal Not Entertained  
+“O” for Abandoned After Publication  
+“P” for Notice of Institution Vacated  
+</status -code>    
+--- Page 6 ---
+TTAB PROCEEDINGS SECTION  
+XML Elements  TWTF Elements  Description  
+PROCEEDING ENTRY (PARTY INFORMATION) SECTION  
+<party -information>  (PART)  
+(PARX)  
+(PARC)  The <party -information> element is optional 
+and will occur zero or more time between 
+the <party -information> sta rt and </party -
+information> end tags. PARTY information 
+for all parties associated with the proceeding 
+entry.  
+Data group containing one or more PARTY 
+identifications.  
+<party>  (PART)  
+(PARX)  
+(PARC)  The <party> element is optional and will 
+occur zero or more  time between the 
+<party> start and </party> end tags.  A 
+single PROCEEDING_ENTRY PARTY 
+definition that identifies an individual and/or 
+organization.  
+Data group containing the party’s name, 
+role, company/organization, address, and 
+property information.  
+PARTY INFORMATION (PARTY) SECTION  
+<identifier>   The < identifier > element is optional and will 
+occur zero or more time between the < 
+identifier > start and </ identifier  > end tags. 
+This tag represents up to 8 -position numeric 
+field that generated by the s ystem  which 
+identifies the party  
+</identifier>    
+<role -code>  (PART)ENT -NUM  The <role -code> element is optional and will 
+occur zero or more time between the < role-
+code > start and </ role-code > end tags.  
+Indicates the type of PARTY involved in the 
+proceedi ng. 
+ 
+A 1-position alphanumeric field indicating 
+the type of party involved in the proceeding.  
+ 
+Valid roles are:  
+“P” for Plaintiff  
+“D” for Defendant  
+</role -code>    
+<name>  (PART) NAM -1 
+ The < name > element is optional and will 
+occur zero or more time s betwe en the 
+<name > start and </ name > end tags . The 
+name element, a  40-position alphanumeric 
+field, it will contain the first 40 characters  of 
+the party  name  that is involved in the 
+proceeding ,  
+</name>    
+--- Page 7 ---
+TTAB PROCEEDINGS SECTION  
+XML Elements  TWTF Elements  Description  
+<orgname>  (PART) NAM -2 
+ 
+(PART) NAM -3 
+ 
+ The < orgname > element is optional and will 
+occur zero or more time between the 
+<orgname > start and </ orgname > end tags.   
+It concatenate s between company and 
+organization  
+Organization and orgname are overflow 
+fields for the Party Name.  Instead of saying 
+Party Name Line 2  and Party Name Line 3, 
+we use Company, and Organization to help 
+our users divide/organize party names that 
+are extremely long.  
+ 
+1.Company name address description  
+2.The organization of the party that is 
+involved in the proceeding.  
+ 
+In general, the only co ntents of these fields 
+are overflow text of the party name.  
+</orgname>    
+ (PART)ADDR -1 - 
+Does not exist in XML  A forty position alphanumeric field.  This 
+field will contain the first 40 characters of the 
+Owner Internal Address within the Address 
+Informa tion. 
+ (PART)ADDR -2 - 
+Does not exist in XML  A forty position alphanumeric field.  This 
+field will contain the first 40 characters of the 
+Owner Street Address within the Address 
+Information.  
+ (PART)CITY - Does 
+not exist in XML  A forty position alphanumeri c field.  This 
+field contains the city of origin designation of 
+an address  
+ (PART)STE/CTRY - 
+Does not exist in XML  A three position alphanumeric field 
+containing the State/Country Code within the 
+Address Information.  The country will 
+appear as a three ch aracter code followed 
+;by a space. Reference Attachment 1 – 
+State/Country Codes.  
+ (PART)ZIP -CD - Does 
+not exist in XML  A nine position alphanumeric field containing 
+the U.S. Postal Zip code or a foreign country 
+postal identification.  The appearance of 
+data in this field will be left justified with 
+trailing spaces, if required.  
+ (PART)FA1 - Does not 
+exist in XML  A one position alphabetic field.  A “T” in this 
+field would indicate that the Internal -Address 
+within the Address Information contains 
+more than 40 characters and the remaining 
+overflow characters will appear in a PARX 
+record.  An “F” indicates the Internal -
+Address is 40 characters or less.  
+--- Page 8 ---
+TTAB PROCEEDINGS SECTION  
+XML Elements  TWTF Elements  Description  
+ (PART)FA2 - Does not 
+exist in XML  A one position alphabetic field.  A “T” in this 
+field would indicate that  the Street within the 
+Address Information contains more than 40 
+characters and the remaining overflow 
+characters will appear in a PARX record.  An 
+“F” indicates the Internal -Address is 40 
+characters or less.  
+ (PART)FCS - Does 
+not exist in XML  A one posit ion alphabetic field.  A “T” in this 
+field would indicate that a Composed of 
+Statement appears as a PARX record for 
+this mark.  An “F” indicates that a Composed 
+of Statement does not appear.  
+ (PART)FDA - Does 
+not exist in XML  A one position alphabetic fie ld.  A “T” in this 
+field would indicate that an DBA/AKA 
+Statement appears as a PARX record for 
+this mark.  An “F” indicates that an 
+DBA/AKA Statement does not appear.  
+ (PART)FNT - Does 
+not exist in XML  A one position alphabetic field.  A “T” in this 
+field would indicate that Name within the 
+PART Information contains more than 3 
+lines (120 characters) and the overflow 
+appears as a PARX record.  An “F” indicates 
+that the Name is within 3 lines.  
+ (PARX) DATA 
+GROUP - Does not 
+exist in XML  A fifty -position alp hanumeric group 
+containing the following three fields: Text 
+Type, Entry Number, and Text.  The data 
+group may have up to five occurrences per 
+PARX record.  Unused positions will contain 
+spaces.  
+PARTY (PROPERTY INFORMATION) SECTION  
+<property -information>  (APNR)  The < property -information > element is 
+optional and will occur zero or more time 
+between the < property -information > start 
+and </ property -information > end tags.   
+Property identification for all PARTY related 
+properties.   Data group containing one or 
+more PROPERTY data related to a specific 
+PARTY.  
+<property>  (APNR)  The <property> element is optional and will 
+occur zero or more time between the 
+<property> start and </property> end tags.  
+Property item identification.  Data group 
+containing the applicati on serial number, 
+trademark registration number (if registered) 
+and mark name of the property.  
+PROPERTY INFORMATION (PROPERTY) SECTION  
+--- Page 9 ---
+TTAB PROCEEDINGS SECTION  
+XML Elements  TWTF Elements  Description  
+<identifier>   The< identifier > element is optional and will 
+occur zero or more time between the < 
+identifier > start a nd </ identifier  > end tags. 
+This tag represents up to 8 -position numeric 
+field that generated by the system  which 
+identifies the property.  
+</identifier>    
+<serial -number>  (APNR)DATA GROUP 
+- SER-NUM  The <serial -number> element is optional 
+and will occur zero or more time between 
+the <serial -number> start and </serial -
+number > end tags.  The number assigned 
+to a trademark application upon initial filing 
+at the PTO.  An 8-position numeric field with 
+leading zeroes containing the number 
+assigned to a tradema rk application upon 
+initial filing at the PTO.  
+</serial -number>    
+<registration -number>  (APNR) DATA 
+GROUP - REG -NUM  The <registration -number > element is 
+optional and will occur zero or more time 
+between the < registration -number > start and 
+</ registratio n-number > end tags.  The 
+number assigned to a trademark application 
+when the mark is officially registered.  This 
+is the registration number of the mark cited 
+in the adversary proceeding.  
+ 
+A 7-position numeric field with leading 
+zeroes containing t he numbe r assigned to a 
+trademark application when the mark is 
+officially registered . 
+ (APNR) DATA 
+GROUP – PARTY 
+ENTRY NUMBER – 
+Does not exist in XML  An eighteen position numeric item 
+containing two fields as defined below.  A 
+group may occur 16 times for each AP NR 
+record.  Unused occurrences will contain 
+spaces.  
+</registration -number>    
+<mark -text>  (TTAX) DATA 
+GROUP  The<mark -text> element is optional and will 
+occur zero or more time between the < mark -
+text> start and </ mark -text> end tags.  
+Contains a textual de scription of a party’s 
+property.  It is used primarily when a Plaintiff 
+does not have a Registered Mark (thus no 
+registration number) but does have a Mark.  
+ 
+A 50-position alphanumeric field containing 
+a textual description of a party’s property.  
+</mark -text>   
+</property>    
+</property -information>    
+--- Page 10 ---
+TTAB PROCEEDINGS SECTION  
+XML Elements  TWTF Elements  Description  
+PARTY (ADDRESS INFORMATION) SECTION  
+<address -information>  (PART)  
+(PARC)  The<address -information> element is 
+optional and will occur zero or more time 
+between the < address -information > start 
+and </ address -information > end tags.  All 
+addresses defined for PARTY.  Data group 
+containing one or more ADDRESS 
+elements.  
+<proceeding -address>  (PART)  
+(PARC)  A single PARTY address.  Data group 
+containing the address type, name, 
+company, and mail address information.  
+ADDRESS INFORMATION (PROCEEDING ADDRESS) SECTION  
+<identifier>   The< identifier > element is optional and will 
+occur zero or more time between the < 
+identifier > start and </ identifier  > end tags. 
+This tag represents up to 15 -position 
+numeric field that g enerated by the system  
+which identifies the address  
+</identifier>    
+<type -code>   The< type-code > element is optional and will 
+occur zero or more time between the < type-
+code > start and </ type-code > end tags.   
+Indicates the type of address.  
+A 1-position alp hanumeric field indicating 
+the type of address.  
+Valid types are:  
+“O” for Owner  
+“C” for Correspondent  
+</type -code>    
+<name>  (PARC) CORR -
+ADDR(1)  The < name > element is optional and will 
+occur zero or more time between the 
+<name > start and </ name > end tags.  The 
+name of the  address  that is involved in the 
+party.  
+A 150-position alphanumeric field containing 
+the complete name of the address  that is 
+involved in the p arty. 
+</name>    
+<orgname>  (PARC) CORR -
+ADDR(2)  The < orgname > element is optional and will 
+occur zero or more time between the 
+<orgname > start and </ orgname > end tags.  
+It concatenate s between company and 
+organization . 
+</orgname>    

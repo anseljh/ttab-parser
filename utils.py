@@ -313,7 +313,28 @@ def extract_party_type(party_element, proceeding_type: str) -> Optional[str]:
     Returns:
         str: Party type or None
     """
-    # Check for explicit party type in element
+    # Check for official TTAB DTD role-code element first
+    role_code_elem = find_element_by_tag(party_element, 'role-code')
+    if role_code_elem:
+        role_code = extract_text_from_element(role_code_elem).upper()
+        if role_code == 'P':  # Plaintiff in official DTD
+            # Map to semantic party type based on proceeding
+            if proceeding_type == 'opposition':
+                return 'opposer'  # In oppositions, plaintiff is typically the opposer
+            elif proceeding_type == 'cancellation':
+                return 'petitioner'  # In cancellations, plaintiff is typically the petitioner
+            else:
+                return 'plaintiff'
+        elif role_code == 'D':  # Defendant in official DTD
+            # Map to semantic party type based on proceeding
+            if proceeding_type == 'opposition':
+                return 'applicant'  # In oppositions, defendant is typically the applicant
+            elif proceeding_type == 'cancellation':
+                return 'registrant'  # In cancellations, defendant is typically the registrant
+            else:
+                return 'defendant'
+    
+    # Check for explicit party type in element attribute
     party_type = party_element.get('type')
     if party_type:
         return party_type.lower()
@@ -333,7 +354,7 @@ def extract_party_type(party_element, proceeding_type: str) -> Optional[str]:
     elif 'defendant' in tag_name:
         return 'defendant'
     
-    # Infer from proceeding type and position
+    # Infer from proceeding type and context
     if proceeding_type == 'opposition':
         # In oppositions, usually applicant vs opposer
         party_role = party_element.get('role', '').lower()
@@ -410,3 +431,54 @@ def create_progress_bar(current: int, total: int, width: int = 50) -> str:
     bar = '█' * filled + '░' * (width - filled)
     
     return f"[{bar}] {percentage:6.1f}% ({current:,}/{total:,})"
+
+
+def parse_date(date_str: str) -> Optional[str]:
+    """
+    Parse date string into standard format (YYYY-MM-DD).
+    Handles TTAB DTD YYYYMMDD format and other common formats.
+    
+    Args:
+        date_str (str): Date string to parse
+        
+    Returns:
+        str: Formatted date or None
+    """
+    if not date_str:
+        return None
+    
+    date_str = date_str.strip()
+    if not date_str:
+        return None
+    
+    # Handle numeric-only dates first (YYYYMMDD format from TTAB DTD)
+    if date_str.isdigit() and len(date_str) == 8:
+        try:
+            year = int(date_str[:4])
+            month = int(date_str[4:6])
+            day = int(date_str[6:8])
+            parsed_date = datetime(year, month, day)
+            return parsed_date.strftime('%Y-%m-%d')
+        except ValueError:
+            pass
+    
+    # Try other common date formats
+    date_patterns = [
+        '%Y-%m-%d',
+        '%m/%d/%Y',
+        '%m-%d-%Y',
+        '%d/%m/%Y',
+        '%d-%m-%Y',
+        '%B %d, %Y',
+        '%b %d, %Y',
+        '%Y%m%d'  # YYYYMMDD format
+    ]
+    
+    for pattern in date_patterns:
+        try:
+            parsed_date = datetime.strptime(date_str, pattern)
+            return parsed_date.strftime('%Y-%m-%d')
+        except ValueError:
+            continue
+    
+    return None

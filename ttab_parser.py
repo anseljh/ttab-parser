@@ -132,8 +132,8 @@ class TTABParser:
                     if event == 'start':
                         continue
                     
-                    # Look for document or proceeding elements
-                    if elem.tag.lower() in ['document', 'proceeding', 'case', 'filing']:
+                    # Look for official TTAB DTD elements or generic document elements
+                    if elem.tag.lower() in ['proceeding-entry', 'document', 'proceeding', 'case', 'filing']:
                         self.stats.total_documents_processed += 1
                         
                         # Check if this is an opinion document
@@ -152,8 +152,7 @@ class TTABParser:
                         
                         # Clear element to save memory
                         elem.clear()
-                        if elem.getparent() is not None:
-                            elem.getparent().remove(elem)
+                        # Note: getparent() is lxml-specific, skip for xml.etree.ElementTree
                 
                 root.clear()
                 
@@ -219,9 +218,10 @@ class TTABParser:
     def _extract_case_info(self, elem, opinion: TTABOpinion):
         """Extract case identification information."""
         
-        # Try various fields for case number
+        # Try various fields for case number (official DTD uses 'number')
         case_number_fields = [
-            'case-number', 'proceeding-number', 'number', 'case_number',
+            'number',  # Official TTAB DTD element
+            'case-number', 'proceeding-number', 'case_number',
             'proceeding_number', 'docket-number', 'docket_number'
         ]
         
@@ -251,34 +251,48 @@ class TTABParser:
                 opinion.case_title = extract_text_from_element(title_elem)
                 break
         
-        # Extract proceeding type
-        type_fields = ['type', 'proceeding-type', 'case-type']
+        # Extract proceeding type using official DTD mapping
+        type_fields = ['type-code', 'type', 'proceeding-type', 'case-type']
         for field in type_fields:
             type_elem = find_element_by_tag(elem, field)
             if type_elem:
-                proc_type = extract_text_from_element(type_elem).lower()
-                if 'opposition' in proc_type:
+                proc_type = extract_text_from_element(type_elem).upper()
+                # Official TTAB DTD type codes
+                if proc_type == 'OPP' or 'opposition' in proc_type.lower():
                     opinion.proceeding_type = ProceedingType.OPPOSITION
-                elif 'cancellation' in proc_type:
+                elif proc_type == 'CAN' or 'cancellation' in proc_type.lower():
                     opinion.proceeding_type = ProceedingType.CANCELLATION
-                elif 'appeal' in proc_type:
+                elif proc_type == 'EXA' or 'appeal' in proc_type.lower():
                     opinion.proceeding_type = ProceedingType.APPEAL
-                elif 'expungement' in proc_type:
+                elif proc_type == 'CNU' or 'concurrent' in proc_type.lower():
+                    opinion.proceeding_type = ProceedingType.EXPUNGEMENT  # Map to closest type
+                elif 'expungement' in proc_type.lower():
                     opinion.proceeding_type = ProceedingType.EXPUNGEMENT
-                elif 'reexamination' in proc_type:
+                elif 'reexamination' in proc_type.lower():
                     opinion.proceeding_type = ProceedingType.REEXAMINATION
                 break
+        
+        # Infer proceeding type from case number if not found
+        if not opinion.proceeding_type and opinion.case_number:
+            case_num = opinion.case_number.strip()
+            if case_num.startswith('91'):
+                opinion.proceeding_type = ProceedingType.OPPOSITION
+            elif case_num.startswith('92'):
+                opinion.proceeding_type = ProceedingType.CANCELLATION
+            elif case_num.startswith(('70', '71', '72', '73', '74')):
+                opinion.proceeding_type = ProceedingType.APPEAL
     
     def _extract_dates(self, elem, opinion: TTABOpinion):
         """Extract filing and decision dates."""
         
-        # Filing date
+        # Filing date (official DTD uses 'filing-date')
         filing_date_fields = ['filing-date', 'filed-date', 'file-date', 'date-filed']
         for field in filing_date_fields:
             date_elem = find_element_by_tag(elem, field)
             if date_elem:
                 date_str = extract_text_from_element(date_elem)
-                opinion.filing_date = parse_xml_date(date_str)
+                from utils import parse_date
+                opinion.filing_date = parse_date(date_str)
                 if opinion.filing_date:
                     break
         
@@ -288,15 +302,32 @@ class TTABParser:
             date_elem = find_element_by_tag(elem, field)
             if date_elem:
                 date_str = extract_text_from_element(date_elem)
-                opinion.decision_date = parse_xml_date(date_str)
+                from utils import parse_date
+                opinion.decision_date = parse_date(date_str)
                 if opinion.decision_date:
                     break
+        
+        # Also check prosecution history for decision events in official DTD
+        if not opinion.decision_date:
+            prosecution_history = find_element_by_tag(elem, 'prosecution-history')
+            if prosecution_history:
+                events = find_elements_by_tag(prosecution_history, 'event')
+                for event in events:
+                    event_code = extract_text_from_element(find_element_by_tag(event, 'event-code'))
+                    if event_code and 'FINALDEC' in event_code.upper():
+                        event_date = extract_text_from_element(find_element_by_tag(event, 'event-date'))
+                        if event_date:
+                            from utils import parse_date
+                            opinion.decision_date = parse_date(event_date)
+                            break
     
     def _extract_parties(self, elem, opinion: TTABOpinion):
         """Extract party information."""
         
-        # Find parties section
-        parties_sections = find_elements_by_tag(elem, 'parties')
+        # Find parties section (official DTD uses 'party-information')
+        parties_sections = find_elements_by_tag(elem, 'party-information')
+        if not parties_sections:
+            parties_sections = find_elements_by_tag(elem, 'parties')
         if not parties_sections:
             parties_sections = [elem]  # Use root element if no parties section
         
@@ -341,13 +372,25 @@ class TTABParser:
         # Clean party name
         party.name = clean_text(party.name)
         
-        # Determine party type
+        # Determine party type using official DTD role-code mapping
         party_type_str = extract_party_type(party_elem, proceeding_type.value if proceeding_type else '')
         if party_type_str:
             try:
-                party.party_type = PartyType(party_type_str)
+                party.party_type = PartyType(party_type_str.upper())
             except ValueError:
-                logger.debug(f"Unknown party type: {party_type_str}")
+                # Try common mappings
+                type_mappings = {
+                    'applicant': PartyType.APPLICANT,
+                    'registrant': PartyType.REGISTRANT,
+                    'opposer': PartyType.OPPOSER,
+                    'petitioner': PartyType.PETITIONER,
+                    'plaintiff': PartyType.PLAINTIFF,
+                    'defendant': PartyType.DEFENDANT
+                }
+                if party_type_str.lower() in type_mappings:
+                    party.party_type = type_mappings[party_type_str.lower()]
+                else:
+                    logger.debug(f"Unknown party type: {party_type_str}")
         
         # Extract address
         address_fields = ['address', 'party-address']

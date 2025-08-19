@@ -49,6 +49,7 @@ Comprehensive logging strategy throughout the pipeline:
 ### USPTO Data Source
 - **TTAB Bulk Data Repository** - Primary source for XML files at `https://bulkdata.uspto.gov/data/trademark/dailyxml/ttab/`
 - Provides daily and annual XML files containing TTAB proceedings and opinions
+- **Official TTAB DTD v1.0** - System now fully compliant with USPTO TTAB XML DTD specification
 
 ### CourtListener API
 - **Federal Circuit Appeals Database** - REST API v4 for matching TTAB cases with Federal Circuit appeals
@@ -61,8 +62,31 @@ Comprehensive logging strategy throughout the pipeline:
 - **pathlib** - Modern file system path handling
 - **dataclasses** - Structured data models with type hints
 - **enum** - Standardized vocabulary definitions
+- **PyPDF2** - PDF processing for documentation analysis
 
 ### File Format Support
-- **XML** - Primary document format from USPTO
+- **XML** - Primary document format from USPTO (supports official TTAB DTD structure)
 - **CSV** - Output format for structured data export
 - **Compressed Files** - Support for gzip and zip compressed XML files
+- **PDF** - Documentation and specification processing
+
+## Recent Changes (August 2025)
+
+### TTAB DTD Compliance Update
+- **Downloaded and analyzed official USPTO TTAB DTD documentation** (v1.0)
+- **Updated XML parser to handle official DTD structure**:
+  - Root element: `<ttab-proceedings>` with version info
+  - Proceeding entries: `<proceeding-entry>` elements
+  - Party information: `<party-information>` with role-code mapping (P=Plaintiff, D=Defendant)
+  - Date format: YYYYMMDD handling for filing-date, event-date elements
+  - Proceeding numbers: Official format validation (91=Opposition, 92=Cancellation, 70-74=Ex Parte Appeal)
+- **Enhanced date parsing**: Added support for TTAB DTD YYYYMMDD format
+- **Improved party type mapping**: Official role-code P/D to semantic party types
+- **Fixed XML memory management**: Removed lxml-specific getparent() calls for compatibility
+
+### System Status
+- ✅ TTAB Downloader: Fully operational
+- ✅ TTAB Parser: DTD-compliant with comprehensive data extraction
+- ✅ CourtListener Client: Ready (requires API token for appeals tracking)
+- ✅ CSV Export: Functional with structured trademark litigation data
+- ✅ Documentation: Complete with official DTD specification analysis
