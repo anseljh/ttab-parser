@@ -77,6 +77,14 @@ Comprehensive logging strategy throughout the pipeline:
 
 ## Recent Changes
 
+### October 2025 - Module Import Fix for uv
+- **Fixed uv execution issue with absolute imports**:
+  - Updated all command examples to use `python -m` flag for module execution
+  - Previous syntax `uv run --env-file .env src/ttab_parser.py` failed with ModuleNotFoundError
+  - Correct syntax: `uv run --env-file .env python -m src.ttab_parser`
+  - Updated README with troubleshooting section explaining the issue
+  - All examples now use consistent module execution pattern
+
 ### October 2025 - TTAB Decision Identification Update
 - **Implemented correct TTAB decision identification**:
   - Parser now identifies TTAB decisions based on prosecution-entry codes

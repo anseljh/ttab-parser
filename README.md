@@ -64,10 +64,10 @@ If you have `uv` installed, use the `--env-file` parameter to automatically load
 
 ```bash
 # Download recent files
-uv run --env-file .env src/ttab_downloader.py --recent 7
+uv run --env-file .env python -m src.ttab_downloader --recent 7
 
 # Parse downloaded files
-uv run --env-file .env src/ttab_parser.py ./ttab_data
+uv run --env-file .env python -m src.ttab_parser ./ttab_data
 ```
 
 **Benefits of using uv --env-file:**
@@ -81,11 +81,11 @@ uv run --env-file .env src/ttab_parser.py ./ttab_data
 If you exported environment variables in your shell, run scripts directly:
 
 ```bash
-python src/ttab_downloader.py --recent 7
-python src/ttab_parser.py ./ttab_data
+python -m src.ttab_downloader --recent 7
+python -m src.ttab_parser ./ttab_data
 ```
 
-**Note**: All examples below show direct Python execution. If using uv, prefix commands with `uv run --env-file .env`.
+**Note**: All examples below show direct Python execution. If using uv, use: `uv run --env-file .env python -m` instead of `python -m`.
 
 ### TTAB Downloader
 
@@ -95,51 +95,51 @@ The downloader fetches TTAB XML files from the USPTO Open Data Portal. It suppor
 
 **Download recent files (last 7 days):**
 ```bash
-python src/ttab_downloader.py --recent 7
+python -m src.ttab_downloader --recent 7
 # OR with uv:
-uv run --env-file .env src/ttab_downloader.py --recent 7
+uv run --env-file .env python -m src.ttab_downloader --recent 7
 ```
 
 **Download recent files (last 30 days):**
 ```bash
-python src/ttab_downloader.py --recent 30
+python -m src.ttab_downloader --recent 30
 ```
 
 **Download all available daily files:**
 ```bash
-python src/ttab_downloader.py --all
+python -m src.ttab_downloader --all
 ```
 
 **Download annual/historical dataset (1951-2024):**
 ```bash
-python src/ttab_downloader.py --annual
+python -m src.ttab_downloader --annual
 ```
 
 #### Advanced Options
 
 **Custom output directory:**
 ```bash
-python src/ttab_downloader.py --output-dir ./my_data --recent 7
+python -m src.ttab_downloader --output-dir ./my_data --recent 7
 ```
 
 **Specify API key directly:**
 ```bash
-python src/ttab_downloader.py --api-key YOUR_API_KEY --recent 7
+python -m src.ttab_downloader --api-key YOUR_API_KEY --recent 7
 ```
 
 **Download specific year (daily dataset only):**
 ```bash
-python src/ttab_downloader.py --year 2025 --all
+python -m src.ttab_downloader --year 2025 --all
 ```
 
 **Force redownload of existing files:**
 ```bash
-python src/ttab_downloader.py --force --recent 7
+python -m src.ttab_downloader --force --recent 7
 ```
 
 **Verbose logging:**
 ```bash
-python src/ttab_downloader.py --verbose --recent 7
+python -m src.ttab_downloader --verbose --recent 7
 ```
 
 #### Downloader Options Summary
@@ -170,39 +170,39 @@ The parser processes TTAB XML files and extracts structured opinion data.
 
 **Parse downloaded files and create CSV:**
 ```bash
-python src/ttab_parser.py ./ttab_data
+python -m src.ttab_parser ./ttab_data
 ```
 
 **Specify custom output file:**
 ```bash
-python src/ttab_parser.py ./ttab_data --output my_results.csv
+python -m src.ttab_parser ./ttab_data --output my_results.csv
 ```
 
 **Disable Federal Circuit appeal lookup:**
 ```bash
-python src/ttab_parser.py ./ttab_data --no-courtlistener
+python -m src.ttab_parser ./ttab_data --no-courtlistener
 ```
 
 #### Advanced Options
 
 **Limit processing (for testing):**
 ```bash
-python src/ttab_parser.py ./ttab_data --limit 100
+python -m src.ttab_parser ./ttab_data --limit 100
 ```
 
 **Enable verbose logging:**
 ```bash
-python src/ttab_parser.py ./ttab_data --verbose
+python -m src.ttab_parser ./ttab_data --verbose
 ```
 
 **Write logs to file:**
 ```bash
-python src/ttab_parser.py ./ttab_data --log-file parsing.log
+python -m src.ttab_parser ./ttab_data --log-file parsing.log
 ```
 
 **Combine options:**
 ```bash
-python src/ttab_parser.py ./ttab_data \
+python -m src.ttab_parser ./ttab_data \
   --output results_2025.csv \
   --verbose \
   --log-file parsing.log \
@@ -241,10 +241,10 @@ head -n 20 ttab_results.csv
 
 ```bash
 # 1. Download recent TTAB data (last 30 days)
-python src/ttab_downloader.py --recent 30 --verbose
+python -m src.ttab_downloader --recent 30 --verbose
 
 # 2. Parse the downloaded files
-python src/ttab_parser.py ./ttab_data --output ttab_results.csv --verbose
+python -m src.ttab_parser ./ttab_data --output ttab_results.csv --verbose
 
 # 3. View the results
 head -n 20 ttab_results.csv
@@ -265,10 +265,10 @@ uv run --env-file .env src/ttab_parser.py ./ttab_historical \
 
 # OR using direct Python:
 # 1. Download annual historical dataset
-python src/ttab_downloader.py --annual --output-dir ./ttab_historical
+python -m src.ttab_downloader --annual --output-dir ./ttab_historical
 
 # 2. Parse with Federal Circuit appeals disabled (faster)
-python src/ttab_parser.py ./ttab_historical \
+python -m src.ttab_parser ./ttab_historical \
   --output historical_results.csv \
   --no-courtlistener \
   --verbose
@@ -430,6 +430,25 @@ Solution:
 3. Check if you're running multiple download processes
 ```
 
+### Module Import Error with uv
+
+**Problem**: `ModuleNotFoundError: No module named 'src'` when running with uv
+```bash
+$ uv run --env-file .env src/ttab_parser.py data
+ModuleNotFoundError: No module named 'src'
+```
+
+**Solution**: Use the `-m` flag to run as a Python module:
+```bash
+# Correct way
+uv run --env-file .env python -m src.ttab_parser data
+
+# OR without uv
+python -m src.ttab_parser data
+```
+
+**Why this happens**: The codebase uses absolute imports (`from src.models import ...`) which require running as a module with `-m` rather than running the file directly.
+
 ## Technical Details
 
 ### TTAB DTD Compliance
@@ -539,8 +558,8 @@ uv run --env-file .env src/ttab_parser.py ./ttab_data --limit 100
 
 # ===== OR Using Direct Python =====
 # (After setting: export USPTO_API_KEY="your-key-here")
-python src/ttab_downloader.py --recent 7
-python src/ttab_parser.py ./ttab_data
+python -m src.ttab_downloader --recent 7
+python -m src.ttab_parser ./ttab_data
 
 # ===== Testing =====
 # Run all tests
