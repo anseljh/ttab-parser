@@ -21,9 +21,9 @@ args = "TTAB Toolkit"
 name = "TTAB Toolkit"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python src/ttab_downloader.py --help"
-
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "uv run parse --help"

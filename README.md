@@ -58,23 +58,30 @@ A Python application for downloading and analyzing Trademark Trial and Appeal Bo
 
 If you created a `.env` file (recommended), you have two options to run the scripts:
 
-#### Option 1: Using uv (Recommended)
+#### Option 1: Using uv with Shortcut Commands (Recommended)
 
-If you have `uv` installed, use the `--env-file` parameter to automatically load environment variables:
+If you have `uv` installed, you can use convenient shortcut commands:
 
 ```bash
 # Download recent files
-uv run --env-file .env python -m src.ttab_downloader --recent 7
+uv run --env-file .env download --recent 7
 
 # Parse downloaded files
-uv run --env-file .env python -m src.ttab_parser ./ttab_data
+uv run --env-file .env parse ./ttab_data
 ```
 
-**Benefits of using uv --env-file:**
-- No need to manually export environment variables
-- Variables are automatically loaded for each command
+**Benefits of using uv with shortcuts:**
+- Short, easy-to-remember commands (`download` and `parse`)
+- Automatically loads environment variables with `--env-file .env`
 - Works consistently across different shells and systems
 - Environment is isolated to the command execution
+
+**Alternative: Full module path**
+```bash
+# Also works (longer syntax)
+uv run --env-file .env python -m src.ttab_downloader --recent 7
+uv run --env-file .env python -m src.ttab_parser ./ttab_data
+```
 
 #### Option 2: Using Direct Execution
 
@@ -537,24 +544,24 @@ For issues or questions:
 cp .env-sample .env
 # Edit .env and add: USPTO_API_KEY=your-key-here
 
-# ===== Using uv (Recommended) =====
+# ===== Using uv with Shortcuts (Recommended) =====
 # Download last 7 days of data
-uv run --env-file .env src/ttab_downloader.py --recent 7
+uv run --env-file .env download --recent 7
 
 # Download last 30 days with verbose output
-uv run --env-file .env src/ttab_downloader.py --recent 30 --verbose
+uv run --env-file .env download --recent 30 --verbose
 
 # Parse downloaded data
-uv run --env-file .env src/ttab_parser.py ./ttab_data
+uv run --env-file .env parse ./ttab_data
 
 # Parse with custom output and verbose logging
-uv run --env-file .env src/ttab_parser.py ./ttab_data --output results.csv --verbose
+uv run --env-file .env parse ./ttab_data --output results.csv --verbose
 
 # Download historical data
-uv run --env-file .env src/ttab_downloader.py --annual
+uv run --env-file .env download --annual
 
 # Test parsing on small sample
-uv run --env-file .env src/ttab_parser.py ./ttab_data --limit 100
+uv run --env-file .env parse ./ttab_data --limit 100
 
 # ===== OR Using Direct Python =====
 # (After setting: export USPTO_API_KEY="your-key-here")

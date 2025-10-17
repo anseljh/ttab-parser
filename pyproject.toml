@@ -1,7 +1,11 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
-name = "repl-nix-workspace"
+name = "ttab-toolkit"
 version = "0.1.0"
-description = "Add your description here"
+description = "TTAB Opinion Analysis System - Download and analyze USPTO TTAB bulk data"
 requires-python = ">=3.11"
 dependencies = [
     "pypdf2>=3.0.1",
@@ -9,3 +13,10 @@ dependencies = [
     "pytest-mock>=3.15.1",
     "requests>=2.32.5",
 ]
+
+[project.scripts]
+parse = "src.ttab_parser:main"
+download = "src.ttab_downloader:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
