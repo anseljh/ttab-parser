@@ -47,9 +47,14 @@ Comprehensive logging strategy throughout the pipeline:
 ## External Dependencies
 
 ### USPTO Data Source
-- **TTAB Bulk Data Repository** - Primary source for XML files at `https://bulkdata.uspto.gov/data/trademark/dailyxml/ttab/`
-- Provides daily and annual XML files containing TTAB proceedings and opinions
-- **Official TTAB DTD v1.0** - System now fully compliant with USPTO TTAB XML DTD specification
+- **USPTO Open Data Portal** - Primary source for TTAB XML files at `https://data.uspto.gov/`
+- **API-based Access** - Uses REST API endpoints at `https://api.uspto.gov/api/v1/datasets/products/`
+- **Daily TTAB Dataset (TTABTDXF)** - Current year daily XML files (2025+)
+- **Annual TTAB Dataset (TTABYR)** - Historical backfile (October 1951 - December 2024)
+- **Authentication** - Requires USPTO API key (free registration at https://data.uspto.gov/myodp)
+- **Rate Limits** - 60 requests/minute (standard), 4 requests/minute (bulk file downloads)
+- **Official TTAB DTD v1.0** - System fully compliant with USPTO TTAB XML DTD specification
+- **Legacy URL Retired** - Old bulkdata.uspto.gov repository replaced by Open Data Portal
 
 ### CourtListener API
 - **Federal Circuit Appeals Database** - REST API v4 for matching TTAB cases with Federal Circuit appeals
@@ -70,9 +75,26 @@ Comprehensive logging strategy throughout the pipeline:
 - **Compressed Files** - Support for gzip and zip compressed XML files
 - **PDF** - Documentation and specification processing
 
-## Recent Changes (August 2025)
+## Recent Changes
 
-### TTAB DTD Compliance Update
+### October 2025 - USPTO Open Data Portal Migration
+- **Migrated to new USPTO Open Data Portal API**:
+  - Updated downloader to use REST API endpoints instead of web scraping
+  - Implemented API key authentication using `USPTO_API_KEY` environment variable
+  - Added support for both daily (TTABTDXF) and annual (TTABYR) datasets
+  - Improved date filtering using API product metadata
+  - Enhanced file download with proper headers and rate limiting (15s delay between downloads)
+- **New Features**:
+  - `--annual` flag to download historical backfile dataset (1951-2024)
+  - API-based file discovery with metadata (file size, release dates, data ranges)
+  - Better error handling for API authentication failures
+  - Progress tracking for file downloads with percentage completion
+- **Breaking Changes**:
+  - Requires USPTO API key (set `USPTO_API_KEY` environment variable)
+  - Old bulkdata.uspto.gov URLs no longer supported
+  - Download URLs now use API endpoints with authentication
+
+### August 2025 - TTAB DTD Compliance Update
 - **Downloaded and analyzed official USPTO TTAB DTD documentation** (v1.0)
 - **Updated XML parser to handle official DTD structure**:
   - Root element: `<ttab-proceedings>` with version info
@@ -85,8 +107,12 @@ Comprehensive logging strategy throughout the pipeline:
 - **Fixed XML memory management**: Removed lxml-specific getparent() calls for compatibility
 
 ### System Status
-- ✅ TTAB Downloader: Fully operational
+- ✅ TTAB Downloader: Fully operational with USPTO Open Data Portal API
 - ✅ TTAB Parser: DTD-compliant with comprehensive data extraction
 - ✅ CourtListener Client: Ready (requires API token for appeals tracking)
 - ✅ CSV Export: Functional with structured trademark litigation data
 - ✅ Documentation: Complete with official DTD specification analysis
+
+### Required Environment Variables
+- **USPTO_API_KEY** - Required for downloading TTAB data from Open Data Portal (obtain at https://data.uspto.gov/myodp)
+- **COURTLISTENER_API_TOKEN** - Optional for Federal Circuit appeals tracking
