@@ -226,9 +226,20 @@ class TTABDownloader:
             output_path = self.output_dir / filename
             
             # Skip if file already exists and not forcing redownload
-            if output_path.exists() and not force_redownload:
-                logger.info(f"File already exists, skipping: {filename}")
-                return True
+            if not force_redownload:
+                # Check if ZIP file exists
+                if output_path.exists():
+                    logger.info(f"ZIP file already exists, skipping: {filename}")
+                    return True
+                
+                # Check if extracted XML file exists (for .zip files)
+                if filename.lower().endswith('.zip'):
+                    # Derive XML filename from ZIP filename
+                    xml_filename = filename[:-4] + '.xml'  # Replace .zip with .xml
+                    xml_path = self.output_dir / xml_filename
+                    if xml_path.exists():
+                        logger.info(f"Extracted XML already exists, skipping download: {xml_filename}")
+                        return True
             
             logger.info(f"Downloading: {filename} ({file_size:,} bytes)")
             
