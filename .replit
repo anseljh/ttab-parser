@@ -17,100 +17,13 @@ author = "agent"
 task = "workflow.run"
 args = "TTAB Toolkit"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "ttab_toolkit_test"
-
 [[workflows.workflow]]
 name = "TTAB Toolkit"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = '''
-pip install requests && python -c "
-import sys
-print('Python version:', sys.version)
-print('\n=== TTAB Toolkit Demo ===')
-print('Available modules:')
-print('1. TTAB Downloader - Downloads XML files from USPTO')
-print('2. TTAB Parser - Parses XML files and extracts opinion data')  
-print('3. CourtListener Client - Searches Federal Circuit appeals')
-print('4. Models - Data structures for trademark litigation data')
-print('5. Utils - Helper functions for XML parsing and data processing')
-print('\n=== Testing Module Imports ===')
-
-try:
-    from ttab_downloader import TTABDownloader
-    print('✓ TTABDownloader imported successfully')
-except Exception as e:
-    print('✗ TTABDownloader import failed:', e)
-
-try:
-    from ttab_parser import TTABParser
-    print('✓ TTABParser imported successfully')
-except Exception as e:
-    print('✗ TTABParser import failed:', e)
-
-try:
-    from courtlistener_client import CourtListenerClient
-    print('✓ CourtListenerClient imported successfully')
-except Exception as e:
-    print('✗ CourtListenerClient import failed:', e)
-
-try:
-    from models import TTABOpinion, ProcessingStats
-    print('✓ Models imported successfully')
-except Exception as e:
-    print('✗ Models import failed:', e)
-
-try:
-    from utils import setup_logging, is_xml_file
-    print('✓ Utils imported successfully')
-except Exception as e:
-    print('✗ Utils import failed:', e)
-
-print('\n=== Quick Functionality Test ===')
-
-# Test TTABDownloader
-try:
-    downloader = TTABDownloader(output_dir='./test_data')
-    print('✓ TTABDownloader instance created')
-except Exception as e:
-    print('✗ TTABDownloader creation failed:', e)
-
-# Test TTABParser
-try:
-    parser = TTABParser(enable_courtlistener=False)
-    print('✓ TTABParser instance created')
-except Exception as e:
-    print('✗ TTABParser creation failed:', e)
-
-# Test CourtListenerClient (without API token)
-try:
-    client = CourtListenerClient()
-    print('✓ CourtListenerClient instance created')
-    if not client.enabled:
-        print('  Note: CourtListener API disabled (no token provided)')
-except Exception as e:
-    print('✗ CourtListenerClient creation failed:', e)
-
-print('\n=== Command Line Help ===')
-print('To use the tools:')
-print('python ttab_downloader.py --help')
-print('python ttab_parser.py --help')
-print('\nExample usage:')
-print('python ttab_downloader.py --recent 7 --output-dir ./ttab_data')
-print('python ttab_parser.py --input-dir ./ttab_data --output analysis.csv')
-"'''
+args = "python src/ttab_downloader.py --help"
 
 [workflows.workflow.metadata]
 outputType = "console"
-
-[[workflows.workflow]]
-name = "ttab_toolkit_test"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pip install requests lxml && python ttab_downloader.py --help"
