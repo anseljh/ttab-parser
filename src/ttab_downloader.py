@@ -15,6 +15,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import json
 import time
+import zipfile
 
 # Configure logging
 logging.basicConfig(
@@ -208,6 +209,33 @@ class TTABDownloader:
                             logger.info(f"Progress: {progress:.1f}% ({downloaded_size:,} / {total_size:,} bytes)")
             
             logger.info(f"Successfully downloaded: {filename} ({downloaded_size:,} bytes)")
+            
+            # Extract ZIP file contents
+            if filename.lower().endswith('.zip'):
+                try:
+                    logger.info(f"Extracting ZIP archive: {filename}")
+                    with zipfile.ZipFile(output_path, 'r') as zip_ref:
+                        # Get list of files in the archive
+                        file_list = zip_ref.namelist()
+                        logger.info(f"Found {len(file_list)} file(s) in archive")
+                        
+                        # Extract all files to the output directory
+                        for file_in_zip in file_list:
+                            zip_ref.extract(file_in_zip, self.output_dir)
+                            extracted_path = self.output_dir / file_in_zip
+                            logger.info(f"Extracted: {file_in_zip} ({extracted_path.stat().st_size:,} bytes)")
+                        
+                    # Delete the ZIP file after successful extraction
+                    output_path.unlink()
+                    logger.info(f"Removed ZIP archive: {filename}")
+                    
+                except zipfile.BadZipFile as e:
+                    logger.error(f"Invalid ZIP file {filename}: {e}")
+                    return False
+                except Exception as e:
+                    logger.error(f"Error extracting {filename}: {e}")
+                    return False
+            
             return True
             
         except requests.RequestException as e:

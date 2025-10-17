@@ -84,11 +84,13 @@ Comprehensive logging strategy throughout the pipeline:
   - Added support for both daily (TTABTDXF) and annual (TTABYR) datasets
   - Improved date filtering using API product metadata
   - Enhanced file download with proper headers and rate limiting (15s delay between downloads)
+  - **Automatic ZIP extraction** - Downloads are automatically unzipped and XML files saved to data directory
 - **New Features**:
   - `--annual` flag to download historical backfile dataset (1951-2024)
   - API-based file discovery with metadata (file size, release dates, data ranges)
   - Better error handling for API authentication failures
   - Progress tracking for file downloads with percentage completion
+  - Automatic extraction of ZIP archives with cleanup (removes ZIP after extraction)
 - **Breaking Changes**:
   - Requires USPTO API key (set `USPTO_API_KEY` environment variable)
   - Old bulkdata.uspto.gov URLs no longer supported
