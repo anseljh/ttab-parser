@@ -77,6 +77,24 @@ Comprehensive logging strategy throughout the pipeline:
 
 ## Recent Changes
 
+### October 2025 - Testing Framework Setup
+- **Added comprehensive unit testing**:
+  - Installed pytest and pytest-mock frameworks
+  - Created 66 unit tests across all core modules
+  - Test coverage for models, utils, downloader, and parser
+  - Test fixtures and sample data in conftest.py
+  - pytest configuration with organized test structure
+- **Test Organization**:
+  - `tests/test_models.py` - Data classes, enums, validation (26 tests)
+  - `tests/test_utils.py` - Text cleaning, date parsing, XML handling (27 tests)
+  - `tests/test_downloader.py` - File detection, duplicate checking, threading (11 tests)
+  - `tests/test_parser.py` - XML parsing, party mapping, proceeding types (13 tests)
+- **Code Quality Improvements**:
+  - Fixed import paths to use absolute imports (src.* pattern)
+  - Fixed case-insensitive XML file detection
+  - All tests passing successfully
+- **Running Tests**: Execute `pytest tests/` to run all unit tests
+
 ### October 2025 - USPTO Open Data Portal Migration
 - **Migrated to new USPTO Open Data Portal API**:
   - Updated downloader to use REST API endpoints instead of web scraping
