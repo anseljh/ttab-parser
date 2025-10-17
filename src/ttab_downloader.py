@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 import json
 import time
 import zipfile
+import threading
 
 # Configure logging
 logging.basicConfig(
@@ -45,6 +46,9 @@ class TTABDownloader:
         
         # Get API key from parameter, environment variable, or None
         self.api_key = api_key or os.environ.get('USPTO_API_KEY')
+        
+        # Track extraction threads for parallel extraction
+        self.extraction_threads = []
         
         # Setup session with headers
         self.session = requests.Session()
@@ -160,6 +164,45 @@ class TTABDownloader:
         
         return file_data_bag
     
+    def extract_zip(self, zip_path):
+        """
+        Extract a ZIP file and delete it after extraction.
+        This method is designed to run in a separate thread.
+        
+        Args:
+            zip_path (Path): Path to the ZIP file to extract
+        """
+        try:
+            logger.info(f"[Thread] Extracting ZIP archive: {zip_path.name}")
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                # Get list of files in the archive
+                file_list = zip_ref.namelist()
+                logger.info(f"[Thread] Found {len(file_list)} file(s) in archive: {zip_path.name}")
+                
+                # Extract all files to the output directory
+                for file_in_zip in file_list:
+                    zip_ref.extract(file_in_zip, self.output_dir)
+                    extracted_path = self.output_dir / file_in_zip
+                    logger.info(f"[Thread] Extracted: {file_in_zip} ({extracted_path.stat().st_size:,} bytes)")
+            
+            # Delete the ZIP file after successful extraction
+            zip_path.unlink()
+            logger.info(f"[Thread] Removed ZIP archive: {zip_path.name}")
+            
+        except zipfile.BadZipFile as e:
+            logger.error(f"[Thread] Invalid ZIP file {zip_path.name}: {e}")
+        except Exception as e:
+            logger.error(f"[Thread] Error extracting {zip_path.name}: {e}")
+    
+    def wait_for_extractions(self):
+        """Wait for all extraction threads to complete."""
+        if self.extraction_threads:
+            logger.info(f"Waiting for {len(self.extraction_threads)} extraction thread(s) to complete...")
+            for thread in self.extraction_threads:
+                thread.join()
+            logger.info("All extractions completed")
+            self.extraction_threads = []
+    
     def download_file(self, file_info, force_redownload=False):
         """
         Download a single file using file information from API.
@@ -210,31 +253,16 @@ class TTABDownloader:
             
             logger.info(f"Successfully downloaded: {filename} ({downloaded_size:,} bytes)")
             
-            # Extract ZIP file contents
+            # Extract ZIP file contents in a separate thread
             if filename.lower().endswith('.zip'):
-                try:
-                    logger.info(f"Extracting ZIP archive: {filename}")
-                    with zipfile.ZipFile(output_path, 'r') as zip_ref:
-                        # Get list of files in the archive
-                        file_list = zip_ref.namelist()
-                        logger.info(f"Found {len(file_list)} file(s) in archive")
-                        
-                        # Extract all files to the output directory
-                        for file_in_zip in file_list:
-                            zip_ref.extract(file_in_zip, self.output_dir)
-                            extracted_path = self.output_dir / file_in_zip
-                            logger.info(f"Extracted: {file_in_zip} ({extracted_path.stat().st_size:,} bytes)")
-                        
-                    # Delete the ZIP file after successful extraction
-                    output_path.unlink()
-                    logger.info(f"Removed ZIP archive: {filename}")
-                    
-                except zipfile.BadZipFile as e:
-                    logger.error(f"Invalid ZIP file {filename}: {e}")
-                    return False
-                except Exception as e:
-                    logger.error(f"Error extracting {filename}: {e}")
-                    return False
+                logger.info(f"Starting extraction thread for: {filename}")
+                extraction_thread = threading.Thread(
+                    target=self.extract_zip,
+                    args=(output_path,),
+                    name=f"Extract-{filename}"
+                )
+                extraction_thread.start()
+                self.extraction_threads.append(extraction_thread)
             
             return True
             
@@ -279,6 +307,9 @@ class TTABDownloader:
             # Small delay to respect rate limits (4 downloads/min for bulk files)
             time.sleep(15)
         
+        # Wait for all extraction threads to complete
+        self.wait_for_extractions()
+        
         return successful_downloads
     
     def download_all_daily(self, year=None, force_redownload=False):
@@ -317,6 +348,9 @@ class TTABDownloader:
             # Small delay to respect rate limits
             time.sleep(15)
         
+        # Wait for all extraction threads to complete
+        self.wait_for_extractions()
+        
         logger.info(f"Download complete: {successful_downloads}/{len(files)} files successful")
         return successful_downloads
     
@@ -350,6 +384,9 @@ class TTABDownloader:
             
             # Small delay to respect rate limits
             time.sleep(15)
+        
+        # Wait for all extraction threads to complete
+        self.wait_for_extractions()
         
         logger.info(f"Download complete: {successful_downloads}/{len(files)} files successful")
         return successful_downloads
