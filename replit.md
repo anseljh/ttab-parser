@@ -77,6 +77,15 @@ Comprehensive logging strategy throughout the pipeline:
 
 ## Recent Changes
 
+### October 2025 - Documentation Complete
+- **Created comprehensive README.md**:
+  - Complete command reference for downloader and parser
+  - All command-line options documented with examples
+  - Workflow examples for common use cases
+  - Troubleshooting guide and best practices
+  - Quick reference card for most common commands
+  - Technical details on TTAB DTD compliance and threading model
+
 ### October 2025 - Testing Framework Setup
 - **Added comprehensive unit testing**:
   - Installed pytest and pytest-mock frameworks
