@@ -134,12 +134,16 @@ class TTABDownloader:
                 if file_date_str:
                     try:
                         # Parse date (format: YYYY-MM-DD)
-                        file_date = datetime.strptime(file_date_str[:10], '%Y-%m-%d')
+                        file_date = datetime.strptime(file_date_str[:10], '%Y-%m-%d').date()
+                        
+                        # Convert start_date and end_date to date objects for comparison
+                        start = start_date.date() if start_date else None
+                        end = end_date.date() if end_date else None
                         
                         # Check if file is within date range
-                        if start_date and file_date < start_date:
+                        if start and file_date < start:
                             continue
-                        if end_date and file_date > end_date:
+                        if end and file_date > end:
                             continue
                         
                         filtered_files.append(file_info)
