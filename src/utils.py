@@ -48,7 +48,7 @@ def is_xml_file(file_path: Path) -> bool:
     Returns:
         bool: True if file appears to be XML
     """
-    suffixes = file_path.suffixes
+    suffixes = [s.lower() for s in file_path.suffixes]
     
     # Check for .xml, .xml.gz, .xml.zip patterns
     if '.xml' in suffixes:

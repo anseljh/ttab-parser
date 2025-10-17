@@ -19,12 +19,12 @@ from typing import List, Optional, Generator
 import glob
 import traceback
 
-from models import (
+from src.models import (
     TTABOpinion, Party, Judge, Attorney, TrademarkMark, FederalCircuitAppeal,
     OutcomeType, PartyType, ProceedingType, ProcessingStats
 )
-from courtlistener_client import CourtListenerClient
-from utils import (
+from src.courtlistener_client import CourtListenerClient
+from src.utils import (
     setup_logging, is_xml_file, open_xml_file, parse_xml_date, clean_text,
     extract_text_from_element, find_element_by_tag, find_elements_by_tag,
     extract_case_number, is_opinion_document, extract_party_type,

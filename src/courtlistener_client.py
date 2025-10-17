@@ -15,7 +15,7 @@ from typing import List, Optional, Dict, Any
 import requests
 from urllib.parse import urlencode
 
-from models import FederalCircuitAppeal, OutcomeType
+from src.models import FederalCircuitAppeal, OutcomeType
 
 logger = logging.getLogger(__name__)
 
