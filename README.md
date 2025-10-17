@@ -1,6 +1,6 @@
 # TTAB Opinion Analysis System
 
-A Python application for downloading and analyzing Trademark Trial and Appeal Board (TTAB) opinion documents from the USPTO Open Data Portal. The system extracts structured information including parties, judges, case outcomes, trademark marks, and optionally tracks Federal Circuit appeals.
+A Python application for downloading and analyzing Trademark Trial and Appeal Board (TTAB) opinion documents from the USPTO Open Data Portal. The system extracts structured information including parties, judges, case outcomes, and trademark, and optionally tracks Federal Circuit appeals.
 
 ## Features
 
