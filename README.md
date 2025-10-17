@@ -29,17 +29,63 @@ A Python application for downloading and analyzing Trademark Trial and Appeal Bo
    pip install -r requirements.txt
    ```
 
-3. **Set up your USPTO API Key:**
+3. **Set up your API keys using .env file:**
+   
+   Copy the sample environment file:
+   ```bash
+   cp .env-sample .env
+   ```
+   
+   Edit `.env` and add your API keys:
+   ```bash
+   USPTO_API_KEY=your-uspto-api-key-here
+   COURTLISTENER_API_TOKEN=your-courtlistener-token-here
+   ```
+   
+   **Note**: The CourtListener token is optional. If you don't need Federal Circuit appeal tracking, you can leave it empty.
+
+4. **Alternative: Set environment variables directly** (optional):
+   
+   Instead of using a `.env` file, you can export variables directly:
    ```bash
    export USPTO_API_KEY="your-api-key-here"
-   ```
-
-4. **Optional - Set up CourtListener API Token** (for Federal Circuit appeals):
-   ```bash
    export COURTLISTENER_API_TOKEN="your-token-here"
    ```
 
 ## Usage
+
+### Running Scripts with Environment Variables
+
+If you created a `.env` file (recommended), you have two options to run the scripts:
+
+#### Option 1: Using uv (Recommended)
+
+If you have `uv` installed, use the `--env-file` parameter to automatically load environment variables:
+
+```bash
+# Download recent files
+uv run --env-file .env src/ttab_downloader.py --recent 7
+
+# Parse downloaded files
+uv run --env-file .env src/ttab_parser.py ./ttab_data
+```
+
+**Benefits of using uv --env-file:**
+- No need to manually export environment variables
+- Variables are automatically loaded for each command
+- Works consistently across different shells and systems
+- Environment is isolated to the command execution
+
+#### Option 2: Using Direct Execution
+
+If you exported environment variables in your shell, run scripts directly:
+
+```bash
+python src/ttab_downloader.py --recent 7
+python src/ttab_parser.py ./ttab_data
+```
+
+**Note**: All examples below show direct Python execution. If using uv, prefix commands with `uv run --env-file .env`.
 
 ### TTAB Downloader
 
@@ -50,6 +96,8 @@ The downloader fetches TTAB XML files from the USPTO Open Data Portal. It suppor
 **Download recent files (last 7 days):**
 ```bash
 python src/ttab_downloader.py --recent 7
+# OR with uv:
+uv run --env-file .env src/ttab_downloader.py --recent 7
 ```
 
 **Download recent files (last 30 days):**
@@ -176,6 +224,21 @@ python src/ttab_parser.py ./ttab_data \
 
 Here's a typical workflow for downloading and analyzing TTAB data:
 
+### Using uv (Recommended)
+
+```bash
+# 1. Download recent TTAB data (last 30 days)
+uv run --env-file .env src/ttab_downloader.py --recent 30 --verbose
+
+# 2. Parse the downloaded files
+uv run --env-file .env src/ttab_parser.py ./ttab_data --output ttab_results.csv --verbose
+
+# 3. View the results
+head -n 20 ttab_results.csv
+```
+
+### Using Direct Python Execution
+
 ```bash
 # 1. Download recent TTAB data (last 30 days)
 python src/ttab_downloader.py --recent 30 --verbose
@@ -190,6 +253,17 @@ head -n 20 ttab_results.csv
 ### Advanced Workflow with Historical Data
 
 ```bash
+# Using uv:
+# 1. Download annual historical dataset
+uv run --env-file .env src/ttab_downloader.py --annual --output-dir ./ttab_historical
+
+# 2. Parse with Federal Circuit appeals disabled (faster)
+uv run --env-file .env src/ttab_parser.py ./ttab_historical \
+  --output historical_results.csv \
+  --no-courtlistener \
+  --verbose
+
+# OR using direct Python:
 # 1. Download annual historical dataset
 python src/ttab_downloader.py --annual --output-dir ./ttab_historical
 
@@ -269,6 +343,8 @@ pytest tests/ --cov=src
 │   ├── test_utils.py            # Utility tests
 │   └── conftest.py              # Test fixtures
 ├── ttab_data/                   # Downloaded XML files (created automatically)
+├── .env-sample                  # Environment variable template
+├── .env                         # Your API keys (create from .env-sample, not committed)
 ├── pytest.ini                   # Test configuration
 ├── requirements.txt             # Python dependencies
 └── README.md                    # This file
@@ -276,10 +352,22 @@ pytest tests/ --cov=src
 
 ## Environment Variables
 
+You can configure environment variables either through a `.env` file (recommended) or by exporting them in your shell.
+
+### Using .env File (Recommended)
+
+1. Copy `.env-sample` to `.env`: `cp .env-sample .env`
+2. Edit `.env` and add your API keys
+3. Run scripts with: `uv run --env-file .env src/script.py`
+
+### Environment Variable Reference
+
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `USPTO_API_KEY` | **Yes** | USPTO Open Data Portal API key ([Get one here](https://data.uspto.gov/myodp)) |
 | `COURTLISTENER_API_TOKEN` | No | CourtListener API token for Federal Circuit appeals |
+
+**Security Note**: Never commit your `.env` file to version control. The `.env-sample` file is provided as a template.
 
 ## Rate Limits and Best Practices
 
@@ -401,24 +489,36 @@ For issues or questions:
 ### Most Common Commands
 
 ```bash
+# ===== Setup =====
+# Copy environment file and add your API keys
+cp .env-sample .env
+# Edit .env and add: USPTO_API_KEY=your-key-here
+
+# ===== Using uv (Recommended) =====
 # Download last 7 days of data
-python src/ttab_downloader.py --recent 7
+uv run --env-file .env src/ttab_downloader.py --recent 7
 
 # Download last 30 days with verbose output
-python src/ttab_downloader.py --recent 30 --verbose
+uv run --env-file .env src/ttab_downloader.py --recent 30 --verbose
 
 # Parse downloaded data
-python src/ttab_parser.py ./ttab_data
+uv run --env-file .env src/ttab_parser.py ./ttab_data
 
 # Parse with custom output and verbose logging
-python src/ttab_parser.py ./ttab_data --output results.csv --verbose
+uv run --env-file .env src/ttab_parser.py ./ttab_data --output results.csv --verbose
 
 # Download historical data
-python src/ttab_downloader.py --annual
+uv run --env-file .env src/ttab_downloader.py --annual
 
 # Test parsing on small sample
-python src/ttab_parser.py ./ttab_data --limit 100
+uv run --env-file .env src/ttab_parser.py ./ttab_data --limit 100
 
+# ===== OR Using Direct Python =====
+# (After setting: export USPTO_API_KEY="your-key-here")
+python src/ttab_downloader.py --recent 7
+python src/ttab_parser.py ./ttab_data
+
+# ===== Testing =====
 # Run all tests
 pytest tests/
 ```

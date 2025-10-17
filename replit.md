@@ -85,6 +85,12 @@ Comprehensive logging strategy throughout the pipeline:
   - Troubleshooting guide and best practices
   - Quick reference card for most common commands
   - Technical details on TTAB DTD compliance and threading model
+- **Environment Configuration**:
+  - Added `.env-sample` template file for API keys
+  - Documented `.env` file setup (copy from sample and add keys)
+  - Documented `uv run --env-file .env` usage for automatic environment loading
+  - Updated all workflow examples with both uv and direct Python execution methods
+  - `.env` properly listed in .gitignore for security
 
 ### October 2025 - Testing Framework Setup
 - **Added comprehensive unit testing**:
