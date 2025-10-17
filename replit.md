@@ -77,6 +77,16 @@ Comprehensive logging strategy throughout the pipeline:
 
 ## Recent Changes
 
+### October 2025 - TTAB Decision Identification Update
+- **Implemented correct TTAB decision identification**:
+  - Parser now identifies TTAB decisions based on prosecution-entry codes
+  - Valid decision codes: 802-849 and 855-894 (excluding 850-854)
+  - Example: `<prosecution-entry><code>870</code></prosecution-entry>` indicates a TTAB decision
+  - Legacy heuristics (document type, judge names, decision phrases) kept as fallback
+  - Added 10 comprehensive unit tests for decision code validation
+  - Fixed ElementTree boolean evaluation bug (elements with no children evaluate to False)
+  - Total test count: 76 tests (all passing)
+
 ### October 2025 - Documentation Complete
 - **Created comprehensive README.md**:
   - Complete command reference for downloader and parser

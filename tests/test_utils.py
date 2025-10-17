@@ -11,7 +11,9 @@ from src.utils import (
     find_element_by_tag,
     find_elements_by_tag,
     extract_case_number,
-    parse_date
+    parse_date,
+    has_ttab_decision_code,
+    is_opinion_document
 )
 import xml.etree.ElementTree as ET
 
@@ -198,3 +200,180 @@ class TestCaseNumberExtraction:
         result = extract_case_number(text)
         assert result is not None
         assert "91/234567" in result
+
+
+class TestTTABDecisionCodes:
+    """Tests for TTAB decision code identification."""
+    
+    def test_valid_code_in_lower_range(self):
+        """Test valid TTAB decision codes 802-849."""
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>802</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is True
+        
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>849</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is True
+    
+    def test_valid_code_in_upper_range(self):
+        """Test valid TTAB decision codes 855-894."""
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>855</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is True
+        
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>870</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is True
+        
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>894</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is True
+    
+    def test_invalid_codes_850_to_854(self):
+        """Test that codes 850-854 are NOT valid TTAB decisions."""
+        for code in [850, 851, 852, 853, 854]:
+            xml_str = f"""
+            <proceeding-entry>
+                <prosecution-entry>
+                    <code>{code}</code>
+                </prosecution-entry>
+            </proceeding-entry>
+            """
+            root = ET.fromstring(xml_str)
+            assert has_ttab_decision_code(root) is False
+    
+    def test_invalid_code_below_range(self):
+        """Test codes below 802 are not valid."""
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>801</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is False
+        
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>500</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is False
+    
+    def test_invalid_code_above_range(self):
+        """Test codes above 894 are not valid."""
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>895</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is False
+        
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>900</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is False
+    
+    def test_non_numeric_code(self):
+        """Test non-numeric codes are skipped."""
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>FINALDEC</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is False
+    
+    def test_no_prosecution_entry(self):
+        """Test documents without prosecution-entry elements."""
+        xml_str = """
+        <proceeding-entry>
+            <case-number>91/123456</case-number>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is False
+    
+    def test_multiple_prosecution_entries_one_valid(self):
+        """Test multiple prosecution entries with one valid code."""
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>500</code>
+            </prosecution-entry>
+            <prosecution-entry>
+                <code>870</code>
+            </prosecution-entry>
+            <prosecution-entry>
+                <code>851</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert has_ttab_decision_code(root) is True
+    
+    def test_is_opinion_document_uses_decision_codes(self):
+        """Test that is_opinion_document uses decision codes as primary check."""
+        xml_str = """
+        <proceeding-entry>
+            <prosecution-entry>
+                <code>870</code>
+            </prosecution-entry>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert is_opinion_document(root) is True
+    
+    def test_is_opinion_document_falls_back_to_legacy(self):
+        """Test that is_opinion_document falls back to legacy heuristics."""
+        xml_str = """
+        <proceeding-entry>
+            <document-type>Final Opinion</document-type>
+        </proceeding-entry>
+        """
+        root = ET.fromstring(xml_str)
+        assert is_opinion_document(root) is True

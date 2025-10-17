@@ -441,6 +441,30 @@ The parser is fully compliant with USPTO TTAB XML DTD v1.0:
 - Date format: YYYYMMDD for filing-date and event-date elements
 - Proceeding numbers: Official formats (91=Opposition, 92=Cancellation, 70-74=Ex Parte Appeal)
 
+### TTAB Decision Identification
+
+The parser identifies TTAB decisions using prosecution-entry codes:
+
+**Valid Decision Codes:**
+- **802-849** (inclusive) - TTAB decision codes
+- **855-894** (inclusive) - TTAB decision codes  
+- **EXCLUDING 850-854** - Not decision codes
+
+**Example XML Structure:**
+```xml
+<proceeding-entry>
+  <prosecution-entry>
+    <code>870</code>  <!-- This indicates a TTAB decision -->
+  </prosecution-entry>
+</proceeding-entry>
+```
+
+**Fallback Method:**  
+For legacy data without prosecution-entry codes, the parser falls back to heuristics:
+- Document type keywords (opinion, decision, ruling, judgment)
+- Presence of judge information
+- Decision-making language in text content
+
 ### Threading Model
 
 - **Downloads**: Sequential with 15-second delay (rate limit compliance)

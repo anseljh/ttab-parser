@@ -252,9 +252,49 @@ def extract_case_number(text: str) -> Optional[str]:
     return None
 
 
+def has_ttab_decision_code(root) -> bool:
+    """
+    Check if element contains a TTAB decision based on prosecution-entry codes.
+    
+    TTAB decisions have prosecution-entry code values:
+    - 802 to 849 (inclusive)
+    - 855 to 894 (inclusive)
+    - EXCLUDING 850 to 854
+    
+    Args:
+        root: XML root element (typically a proceeding-entry)
+        
+    Returns:
+        bool: True if element contains a TTAB decision code
+    """
+    # Find all prosecution-entry elements
+    prosecution_entries = find_elements_by_tag(root, 'prosecution-entry')
+    
+    for entry in prosecution_entries:
+        # Look for code element within prosecution-entry
+        code_elem = find_element_by_tag(entry, 'code')
+        if code_elem is not None:
+            code_text = extract_text_from_element(code_elem)
+            if code_text:
+                try:
+                    code_value = int(code_text.strip())
+                    # Check if code is in TTAB decision range
+                    # Valid ranges: 802-849 or 855-894
+                    if (802 <= code_value <= 849) or (855 <= code_value <= 894):
+                        return True
+                except ValueError:
+                    # Not a numeric code, skip
+                    continue
+    
+    return False
+
+
 def is_opinion_document(root) -> bool:
     """
-    Determine if XML document represents an opinion.
+    Determine if XML document represents a TTAB opinion/decision.
+    
+    Primary method: Check prosecution-entry codes (802-849, 855-894)
+    Fallback: Use legacy heuristics for documents without prosecution entries
     
     Args:
         root: XML root element
@@ -262,6 +302,11 @@ def is_opinion_document(root) -> bool:
     Returns:
         bool: True if document appears to be an opinion
     """
+    # PRIMARY: Check for TTAB decision codes in prosecution entries
+    if has_ttab_decision_code(root):
+        return True
+    
+    # FALLBACK: Legacy heuristics for documents without prosecution entries
     # Look for opinion-specific elements and content
     opinion_indicators = [
         'opinion',
