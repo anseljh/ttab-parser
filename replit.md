@@ -79,12 +79,13 @@ Comprehensive logging strategy throughout the pipeline:
 
 ### October 2025 - uv Entry Point Shortcuts
 - **Added convenient shortcut commands for uv**:
-  - `uv run parse` - shortcut for running the parser
+  - `uv run parse` - shortcut for running the parser (now with default directory)
   - `uv run download` - shortcut for running the downloader
   - Configured via `[project.scripts]` in pyproject.toml
   - Added hatchling build system for entry point support
+  - **Parser defaults to `ttab_data` directory** - no need to specify input directory
   - Updated all documentation with new shortcut syntax
-  - Full command: `uv run --env-file .env parse ./ttab_data`
+  - Full command: `uv run --env-file .env parse` (directory optional)
 
 ### October 2025 - Module Import Fix for uv
 - **Fixed uv execution issue with absolute imports**:

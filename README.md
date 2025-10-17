@@ -66,8 +66,11 @@ If you have `uv` installed, you can use convenient shortcut commands:
 # Download recent files
 uv run --env-file .env download --recent 7
 
-# Parse downloaded files
-uv run --env-file .env parse ./ttab_data
+# Parse downloaded files (from default ttab_data directory)
+uv run --env-file .env parse
+
+# Or specify a custom directory
+uv run --env-file .env parse ./custom_data
 ```
 
 **Benefits of using uv with shortcuts:**
@@ -80,7 +83,7 @@ uv run --env-file .env parse ./ttab_data
 ```bash
 # Also works (longer syntax)
 uv run --env-file .env python -m src.ttab_downloader --recent 7
-uv run --env-file .env python -m src.ttab_parser ./ttab_data
+uv run --env-file .env python -m src.ttab_parser
 ```
 
 #### Option 2: Using Direct Execution
@@ -89,7 +92,7 @@ If you exported environment variables in your shell, run scripts directly:
 
 ```bash
 python -m src.ttab_downloader --recent 7
-python -m src.ttab_parser ./ttab_data
+python -m src.ttab_parser  # Uses default ttab_data directory
 ```
 
 **Note**: All examples below show direct Python execution. If using uv, use: `uv run --env-file .env python -m` instead of `python -m`.
@@ -175,41 +178,46 @@ The parser processes TTAB XML files and extracts structured opinion data.
 
 #### Basic Commands
 
-**Parse downloaded files and create CSV:**
+**Parse downloaded files and create CSV (uses default ttab_data directory):**
 ```bash
-python -m src.ttab_parser ./ttab_data
+python -m src.ttab_parser
+```
+
+**Parse from custom directory:**
+```bash
+python -m src.ttab_parser ./custom_data
 ```
 
 **Specify custom output file:**
 ```bash
-python -m src.ttab_parser ./ttab_data --output my_results.csv
+python -m src.ttab_parser --output my_results.csv
 ```
 
 **Disable Federal Circuit appeal lookup:**
 ```bash
-python -m src.ttab_parser ./ttab_data --no-courtlistener
+python -m src.ttab_parser --no-courtlistener
 ```
 
 #### Advanced Options
 
 **Limit processing (for testing):**
 ```bash
-python -m src.ttab_parser ./ttab_data --limit 100
+python -m src.ttab_parser --limit 100
 ```
 
 **Enable verbose logging:**
 ```bash
-python -m src.ttab_parser ./ttab_data --verbose
+python -m src.ttab_parser --verbose
 ```
 
 **Write logs to file:**
 ```bash
-python -m src.ttab_parser ./ttab_data --log-file parsing.log
+python -m src.ttab_parser --log-file parsing.log
 ```
 
 **Combine options:**
 ```bash
-python -m src.ttab_parser ./ttab_data \
+python -m src.ttab_parser \
   --output results_2025.csv \
   --verbose \
   --log-file parsing.log \
@@ -251,7 +259,7 @@ head -n 20 ttab_results.csv
 python -m src.ttab_downloader --recent 30 --verbose
 
 # 2. Parse the downloaded files
-python -m src.ttab_parser ./ttab_data --output ttab_results.csv --verbose
+python -m src.ttab_parser --output ttab_results.csv --verbose
 
 # 3. View the results
 head -n 20 ttab_results.csv
@@ -551,22 +559,22 @@ uv run --env-file .env download --recent 7
 # Download last 30 days with verbose output
 uv run --env-file .env download --recent 30 --verbose
 
-# Parse downloaded data
-uv run --env-file .env parse ./ttab_data
+# Parse downloaded data (uses default ttab_data directory)
+uv run --env-file .env parse
 
 # Parse with custom output and verbose logging
-uv run --env-file .env parse ./ttab_data --output results.csv --verbose
+uv run --env-file .env parse --output results.csv --verbose
 
 # Download historical data
 uv run --env-file .env download --annual
 
-# Test parsing on small sample
-uv run --env-file .env parse ./ttab_data --limit 100
+# Test parsing on small sample (uses default directory)
+uv run --env-file .env parse --limit 100
 
 # ===== OR Using Direct Python =====
 # (After setting: export USPTO_API_KEY="your-key-here")
 python -m src.ttab_downloader --recent 7
-python -m src.ttab_parser ./ttab_data
+python -m src.ttab_parser
 
 # ===== Testing =====
 # Run all tests

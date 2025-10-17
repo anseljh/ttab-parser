@@ -737,7 +737,9 @@ def main():
     
     parser.add_argument(
         "input_dir",
-        help="Directory containing TTAB XML files"
+        nargs='?',
+        default="ttab_data",
+        help="Directory containing TTAB XML files (default: ttab_data)"
     )
     
     parser.add_argument(
