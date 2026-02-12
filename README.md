@@ -11,7 +11,7 @@ A Python application for downloading and analyzing Trademark Trial and Appeal Bo
 - **CSV Export**: Structured data export for analysis
 - **Smart Caching**: Duplicate detection and automatic ZIP extraction
 - **Parallel Processing**: Threaded extraction for improved performance
-- **Comprehensive Testing**: 66 unit tests ensuring code quality
+- **Comprehensive Testing**: 76 unit tests ensuring code quality
 
 ## Installation
 
@@ -335,7 +335,7 @@ pytest tests/ --cov=src
 
 ### Test Coverage
 
-- **66 unit tests** covering all core modules:
+- **76 unit tests** covering all core modules:
   - `tests/test_models.py` - Data classes, enums, validation (26 tests)
   - `tests/test_utils.py` - Text cleaning, date parsing, XML handling (27 tests)
   - `tests/test_downloader.py` - File detection, duplicate checking (11 tests)
