@@ -8,7 +8,6 @@ Supports both daily (TTABTDXF) and annual (TTABYR) datasets.
 
 import argparse
 import logging
-import os
 import requests
 import sys
 from pathlib import Path
@@ -17,6 +16,8 @@ import json
 import time
 import zipfile
 import threading
+
+from src.settings import get as get_setting
 
 # Configure logging
 logging.basicConfig(
@@ -44,8 +45,8 @@ class TTABDownloader:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Get API key from parameter, environment variable, or None
-        self.api_key = api_key or os.environ.get('USPTO_API_KEY')
+        # Get API key from parameter or settings.toml
+        self.api_key = api_key or get_setting("USPTO", "api_key")
         
         # Track extraction threads for parallel extraction
         self.extraction_threads = []
@@ -63,7 +64,7 @@ class TTABDownloader:
             })
             logger.info("Using USPTO API key for authentication")
         else:
-            logger.warning("No USPTO API key found. Set USPTO_API_KEY environment variable for API access.")
+            logger.warning("No USPTO API key found. Set api_key under [USPTO] in settings.toml.")
             logger.warning("Visit https://data.uspto.gov/myodp to obtain an API key.")
     
     def get_product_info(self, product_id):
@@ -83,7 +84,7 @@ class TTABDownloader:
             response = self.session.get(url, timeout=30)
             
             if response.status_code == 403:
-                logger.error("API access forbidden. Please set your USPTO_API_KEY environment variable.")
+                logger.error("API access forbidden. Check that api_key under [USPTO] in settings.toml is correct.")
                 logger.error("Visit https://data.uspto.gov/myodp to obtain an API key.")
                 return None
             
@@ -407,7 +408,7 @@ def main():
     """Main command-line interface."""
     parser = argparse.ArgumentParser(
         description="Download TTAB XML bulk data files from USPTO Open Data Portal",
-        epilog="Requires USPTO_API_KEY environment variable. Visit https://data.uspto.gov/myodp to obtain an API key."
+        epilog="Requires api_key under [USPTO] in settings.toml. Visit https://data.uspto.gov/myodp to obtain an API key."
     )
     
     parser.add_argument(
@@ -418,7 +419,7 @@ def main():
     
     parser.add_argument(
         "--api-key", "-k",
-        help="USPTO Open Data Portal API key (or set USPTO_API_KEY environment variable)"
+        help="USPTO Open Data Portal API key (overrides settings.toml)"
     )
     
     parser.add_argument(
@@ -468,8 +469,8 @@ def main():
     
     # Check if API key is available
     if not downloader.api_key:
-        logger.error("USPTO_API_KEY not found!")
-        logger.error("Please set the USPTO_API_KEY environment variable or use --api-key option")
+        logger.error("USPTO API key not found!")
+        logger.error("Set api_key under [USPTO] in settings.toml, or use --api-key option")
         logger.error("Visit https://data.uspto.gov/myodp to obtain an API key")
         sys.exit(1)
     

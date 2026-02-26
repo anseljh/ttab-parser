@@ -11,29 +11,29 @@ This is a data processing toolkit for USPTO Trademark Trial and Appeal Board (TT
 ### Setup
 
 ```bash
-cp .env-sample .env  # then fill in API keys
-uv sync              # install dependencies
+cp settings-example.toml settings.toml  # then fill in API keys
+uv sync                                  # install dependencies
 ```
 
 ### Run the downloader
 
 ```bash
-uv run --env-file .env download                    # recent 7 days (default)
-uv run --env-file .env download --recent 30        # last 30 days
-uv run --env-file .env download --all              # all current-year daily files
-uv run --env-file .env download --annual           # historical backfile (1951-2024)
-uv run --env-file .env download --force            # redownload existing files
+uv run download                    # recent 7 days (default)
+uv run download --recent 30        # last 30 days
+uv run download --all              # all current-year daily files
+uv run download --annual           # historical backfile (1951-2024)
+uv run download --force            # redownload existing files
 ```
 
 ### Run the parser
 
 ```bash
-uv run --env-file .env parse                       # parse ttab_data/ (default dir)
-uv run --env-file .env parse /path/to/xml/dir      # specify directory
-uv run --env-file .env parse --no-courtlistener    # skip Federal Circuit lookup
-uv run --env-file .env parse --limit 10            # process only 10 opinions
-uv run --env-file .env parse -o output.csv         # custom output file
-uv run --env-file .env parse --verbose             # debug logging
+uv run parse                       # parse ttab_data/ (default dir)
+uv run parse /path/to/xml/dir      # specify directory
+uv run parse --no-courtlistener    # skip Federal Circuit lookup
+uv run parse --limit 10            # process only 10 opinions
+uv run parse -o output.csv         # custom output file
+uv run parse --verbose             # debug logging
 ```
 
 ### Tests
@@ -70,12 +70,14 @@ The official TTAB DTD v1.0 uses:
 - Proceeding types inferred from case number prefix: 91=Opposition, 92=Cancellation, 70–74=Appeal
 - Decision identification: `<prosecution-entry><code>NNN</code>` where NNN is 802–849 or 855–894
 
-### Environment variables
+### Settings (`settings.toml`)
 
-| Variable | Required | Purpose |
-|---|---|---|
-| `USPTO_API_KEY` | Yes (downloader) | USPTO Open Data Portal auth |
-| `COURTLISTENER_API_TOKEN` | No | Federal Circuit appeal lookup |
+Copy `settings-example.toml` to `settings.toml` and fill in values. The file is gitignored.
+
+| Section | Key | Required | Purpose |
+|---|---|---|---|
+| `[USPTO]` | `api_key` | Yes (downloader) | USPTO Open Data Portal auth |
+| `[CourtListener]` | `api_token` | No | Federal Circuit appeal lookup |
 
 Obtain USPTO API key at https://data.uspto.gov/myodp.
 

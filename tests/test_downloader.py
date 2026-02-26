@@ -31,11 +31,11 @@ class TestTTABDownloader:
         )
         assert downloader.api_key == "test-key-123"
     
-    @patch.dict('os.environ', {'USPTO_API_KEY': 'env-key-456'})
-    def test_api_key_from_environment(self, temp_data_dir):
-        """Test API key is loaded from environment."""
-        downloader = TTABDownloader(output_dir=str(temp_data_dir))
-        assert downloader.api_key == "env-key-456"
+    def test_api_key_from_settings(self, temp_data_dir):
+        """Test API key is loaded from settings.toml."""
+        with patch('src.ttab_downloader.get_setting', return_value='settings-key-456'):
+            downloader = TTABDownloader(output_dir=str(temp_data_dir))
+            assert downloader.api_key == "settings-key-456"
     
     def test_extraction_threads_initialized(self, temp_data_dir):
         """Test extraction threads list is initialized."""

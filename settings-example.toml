@@ -1,0 +1,8 @@
+[USPTO]
+# Required for downloading TTAB data from the USPTO Open Data Portal.
+# Obtain a free key at https://data.uspto.gov/myodp
+api_key = ""
+
+[CourtListener]
+# Optional. Required only for Federal Circuit appeal lookup.
+api_token = ""

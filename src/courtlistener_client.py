@@ -7,7 +7,6 @@ for matching TTAB cases with Federal Circuit appeals.
 
 import json
 import logging
-import os
 import re
 import time
 from datetime import datetime
@@ -16,6 +15,7 @@ import requests
 from urllib.parse import urlencode
 
 from src.models import FederalCircuitAppeal, OutcomeType
+from src.settings import get as get_setting
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class CourtListenerClient:
         Args:
             api_token (str, optional): API token. If not provided, will try to get from environment.
         """
-        self.api_token = api_token or os.getenv("COURTLISTENER_API_TOKEN")
+        self.api_token = api_token or get_setting("CourtListener", "api_token")
         self.session = requests.Session()
         
         if self.api_token:
@@ -45,7 +45,7 @@ class CourtListenerClient:
             logger.info("CourtListener API client initialized successfully")
         else:
             self.enabled = False
-            logger.warning("No CourtListener API token found. Federal Circuit appeal tracking disabled.")
+            logger.warning("No CourtListener API token found. Set api_token under [CourtListener] in settings.toml to enable Federal Circuit appeal tracking.")
         
         # Rate limiting
         self.last_request_time = 0

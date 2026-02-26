@@ -26,8 +26,11 @@ test_data/
 .vscode/
 .idea/
 
-# Environment
+# Settings (contains API keys)
+settings.toml
 .env
+
+# Virtual environment
 .venv
 venv/
 ENV/
