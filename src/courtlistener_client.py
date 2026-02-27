@@ -56,7 +56,7 @@ class CourtListenerClient:
         self.query_limit: int | None = int(limit_setting) if limit_setting is not None else None
         self.query_count: int = 0
         if self.query_limit is not None:
-            logger.info("CourtListener query limit: %d per run", self.query_limit)
+            logger.info(f"CourtListener query limit: {self.query_limit} per run")
     
     def _rate_limit(self):
         """Enforce rate limiting between API requests."""
@@ -88,8 +88,7 @@ class CourtListenerClient:
 
         if self.query_limit is not None and self.query_count >= self.query_limit:
             logger.info(
-                "CourtListener query limit reached (%d/%d). Skipping further requests.",
-                self.query_count, self.query_limit,
+                f"CourtListener query limit reached ({self.query_count}/{self.query_limit}). Skipping further requests."
             )
             return None
 
