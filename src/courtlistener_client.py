@@ -162,23 +162,31 @@ class CourtListenerClient:
         # Build search query with party names
         query_parts = []
         
+        # Real party names are short. Names longer than this are almost certainly
+        # raw XML field concatenations from the parser (IDs, addresses, etc.) and
+        # will produce URLs that cause 502 errors from CourtListener.
+        MAX_NAME_LEN = 80
+
         for party_name in party_names:
             if party_name and len(party_name.strip()) > 2:
                 # Clean party name
                 clean_name = re.sub(r'[^\w\s]', ' ', party_name.strip())
-                if len(clean_name) > 2:
+                if 2 < len(clean_name) <= MAX_NAME_LEN:
                     query_parts.append(f'"{clean_name}"')
-        
+
         if additional_terms:
             for term in additional_terms:
                 if term and len(term.strip()) > 2:
                     query_parts.append(f'"{term.strip()}"')
-        
+
         if not query_parts:
             return []
-        
-        # Combine with OR logic for broader search
-        query = ' OR '.join(query_parts[:5])  # Limit to avoid too long queries
+
+        # Limit term count and total query length to avoid 502s from CourtListener.
+        query_parts = query_parts[:5]
+        query = ' OR '.join(query_parts)
+        if len(query) > 500:
+            query = query[:500]
         
         return self.search_federal_circuit_cases(query, limit=15)
     

@@ -205,10 +205,15 @@ def enrich_task(self):
                     case_title=record.case_title,
                     decision_date=record.decision_date,
                 )
-                # Rehydrate party names so the name-based search works
+                # Rehydrate party names so the name-based search works.
+                # Skip names longer than 100 chars — they're garbage strings
+                # (IDs, addresses, etc.) from the XML parser, not real names,
+                # and will produce URLs that cause 502 errors from CourtListener.
                 if record.parties:
                     for p in record.parties:
-                        opinion.parties.append(Party(name=p.get("name")))
+                        name = p.get("name") or ""
+                        if 0 < len(name) <= 100:
+                            opinion.parties.append(Party(name=name))
 
                 appeal = client.find_federal_circuit_appeal(opinion)
                 if appeal is None:
