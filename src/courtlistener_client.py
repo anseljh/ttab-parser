@@ -50,6 +50,13 @@ class CourtListenerClient:
         # Rate limiting
         self.last_request_time = 0
         self.min_request_interval = 1.0  # Minimum seconds between requests
+
+        # Per-run query limit (None = unlimited)
+        limit_setting = get_setting("limits", "cl_limit")
+        self.query_limit: int | None = int(limit_setting) if limit_setting is not None else None
+        self.query_count: int = 0
+        if self.query_limit is not None:
+            logger.info("CourtListener query limit: %d per run", self.query_limit)
     
     def _rate_limit(self):
         """Enforce rate limiting between API requests."""
@@ -78,7 +85,15 @@ class CourtListenerClient:
         """
         if not self.enabled:
             return None
-        
+
+        if self.query_limit is not None and self.query_count >= self.query_limit:
+            logger.info(
+                "CourtListener query limit reached (%d/%d). Skipping further requests.",
+                self.query_count, self.query_limit,
+            )
+            return None
+
+        self.query_count += 1
         self._rate_limit()
         
         try:
