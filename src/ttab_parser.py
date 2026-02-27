@@ -227,7 +227,7 @@ class TTABParser:
         
         for field in case_number_fields:
             case_elem = find_element_by_tag(elem, field)
-            if case_elem:
+            if case_elem is not None:
                 case_number = extract_text_from_element(case_elem)
                 if case_number:
                     if 'proceeding' in field:
@@ -247,15 +247,15 @@ class TTABParser:
         title_fields = ['title', 'case-title', 'name', 'caption']
         for field in title_fields:
             title_elem = find_element_by_tag(elem, field)
-            if title_elem:
+            if title_elem is not None:
                 opinion.case_title = extract_text_from_element(title_elem)
                 break
-        
+
         # Extract proceeding type using official DTD mapping
         type_fields = ['type-code', 'type', 'proceeding-type', 'case-type']
         for field in type_fields:
             type_elem = find_element_by_tag(elem, field)
-            if type_elem:
+            if type_elem is not None:
                 proc_type = extract_text_from_element(type_elem).upper()
                 # Official TTAB DTD type codes
                 if proc_type == 'OPP' or 'opposition' in proc_type.lower():
@@ -289,20 +289,20 @@ class TTABParser:
         filing_date_fields = ['filing-date', 'filed-date', 'file-date', 'date-filed']
         for field in filing_date_fields:
             date_elem = find_element_by_tag(elem, field)
-            if date_elem:
+            if date_elem is not None:
                 date_str = extract_text_from_element(date_elem)
-                from utils import parse_date
+                from src.utils import parse_date
                 opinion.filing_date = parse_date(date_str)
                 if opinion.filing_date:
                     break
-        
+
         # Decision date
         decision_date_fields = ['decision-date', 'decided-date', 'date-decided', 'judgment-date']
         for field in decision_date_fields:
             date_elem = find_element_by_tag(elem, field)
-            if date_elem:
+            if date_elem is not None:
                 date_str = extract_text_from_element(date_elem)
-                from utils import parse_date
+                from src.utils import parse_date
                 opinion.decision_date = parse_date(date_str)
                 if opinion.decision_date:
                     break
@@ -317,7 +317,7 @@ class TTABParser:
                     if event_code and 'FINALDEC' in event_code.upper():
                         event_date = extract_text_from_element(find_element_by_tag(event, 'event-date'))
                         if event_date:
-                            from utils import parse_date
+                            from src.utils import parse_date
                             opinion.decision_date = parse_date(event_date)
                             break
     
@@ -354,18 +354,21 @@ class TTABParser:
         
         party = Party()
         
-        # Extract party name
+        # Extract party name from the direct <name>/<party-name>/<entity-name>
+        # child of the party element.  We search only direct children (not the
+        # full subtree) because <proceeding-address> also contains a <name>
+        # element (the attorney name) and an iter()-based deep search would
+        # return that instead when the party's own <name> comes later in the
+        # element order.
         name_fields = ['name', 'party-name', 'entity-name']
         for field in name_fields:
-            name_elem = find_element_by_tag(party_elem, field)
-            if name_elem:
+            name_elem = next(
+                (c for c in party_elem if c.tag.lower() == field), None
+            )
+            if name_elem is not None:
                 party.name = extract_text_from_element(name_elem)
                 break
-        
-        if not party.name:
-            # Try to get name from element text
-            party.name = extract_text_from_element(party_elem)
-        
+
         if not party.name:
             return None
         
@@ -396,15 +399,15 @@ class TTABParser:
         address_fields = ['address', 'party-address']
         for field in address_fields:
             addr_elem = find_element_by_tag(party_elem, field)
-            if addr_elem:
+            if addr_elem is not None:
                 party.address = extract_text_from_element(addr_elem)
                 break
-        
+
         # Extract country
         country_fields = ['country', 'country-code']
         for field in country_fields:
             country_elem = find_element_by_tag(party_elem, field)
-            if country_elem:
+            if country_elem is not None:
                 party.country = extract_text_from_element(country_elem)
                 break
         
@@ -426,29 +429,26 @@ class TTABParser:
         name_fields = ['name', 'attorney-name']
         for field in name_fields:
             name_elem = find_element_by_tag(attorney_elem, field)
-            if name_elem:
+            if name_elem is not None:
                 attorney.name = extract_text_from_element(name_elem)
                 break
-        
-        if not attorney.name:
-            attorney.name = extract_text_from_element(attorney_elem)
-        
+
         if not attorney.name:
             return None
-        
+
         # Extract registration number
         reg_fields = ['registration-number', 'reg-number', 'bar-number']
         for field in reg_fields:
             reg_elem = find_element_by_tag(attorney_elem, field)
-            if reg_elem:
+            if reg_elem is not None:
                 attorney.registration_number = extract_text_from_element(reg_elem)
                 break
-        
+
         # Extract firm
         firm_fields = ['firm', 'law-firm', 'firm-name']
         for field in firm_fields:
             firm_elem = find_element_by_tag(attorney_elem, field)
-            if firm_elem:
+            if firm_elem is not None:
                 attorney.firm = extract_text_from_element(firm_elem)
                 break
         
@@ -493,13 +493,10 @@ class TTABParser:
         name_fields = ['name', 'judge-name']
         for field in name_fields:
             name_elem = find_element_by_tag(judge_elem, field)
-            if name_elem:
+            if name_elem is not None:
                 judge.name = extract_text_from_element(name_elem)
                 break
-        
-        if not judge.name:
-            judge.name = extract_text_from_element(judge_elem)
-        
+
         if not judge.name:
             return None
         
@@ -543,7 +540,7 @@ class TTABParser:
         outcome_fields = ['outcome', 'decision', 'ruling', 'judgment', 'disposition']
         for field in outcome_fields:
             outcome_elem = find_element_by_tag(elem, field)
-            if outcome_elem:
+            if outcome_elem is not None:
                 outcome_text = extract_text_from_element(outcome_elem).lower()
                 opinion.outcome = self._parse_outcome_text(outcome_text)
                 opinion.outcome_description = outcome_text
@@ -640,7 +637,7 @@ class TTABParser:
         text_fields = ['mark-text', 'text', 'mark']
         for field in text_fields:
             text_elem = find_element_by_tag(mark_elem, field)
-            if text_elem:
+            if text_elem is not None:
                 mark.mark_text = extract_text_from_element(text_elem)
                 break
         

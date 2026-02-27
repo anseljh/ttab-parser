@@ -325,7 +325,7 @@ def is_opinion_document(root) -> bool:
     
     # Check for presence of judge information
     judges_elem = find_element_by_tag(root, 'judges')
-    if judges_elem or find_element_by_tag(root, 'judge'):
+    if judges_elem is not None or find_element_by_tag(root, 'judge') is not None:
         return True
     
     # Check for outcome/decision language
@@ -360,7 +360,7 @@ def extract_party_type(party_element, proceeding_type: str) -> Optional[str]:
     """
     # Check for official TTAB DTD role-code element first
     role_code_elem = find_element_by_tag(party_element, 'role-code')
-    if role_code_elem:
+    if role_code_elem is not None:
         role_code = extract_text_from_element(role_code_elem).upper()
         if role_code == 'P':  # Plaintiff in official DTD
             # Map to semantic party type based on proceeding
