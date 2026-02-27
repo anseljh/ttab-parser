@@ -1,16 +1,16 @@
 """Integration tests for CourtListener API."""
 
-import os
 import pytest
 import requests
+from src.settings import get as get_setting
 
 
 @pytest.mark.integration
 def test_citation_lookup_brown_v_board():
     """Test that the CourtListener Citation Lookup API resolves 347 U.S. 483 (Brown v. Board of Education)."""
-    api_token = os.getenv("COURTLISTENER_API_TOKEN")
+    api_token = get_setting("CourtListener", "api_token")
     if not api_token:
-        pytest.skip("COURTLISTENER_API_TOKEN not set")
+        pytest.skip("CourtListener api_token not set in settings.toml")
 
     url = "https://www.courtlistener.com/api/rest/v4/citation-lookup/"
     headers = {
