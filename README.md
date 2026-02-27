@@ -134,6 +134,9 @@ url = "postgresql://ttab:ttab@localhost:5432/ttab"
 
 [redis]
 url = "redis://localhost:6379/0"
+
+[limits]
+cl_limit = 100   # optional — omit for unlimited
 ```
 
 `DATABASE_URL` and `REDIS_URL` environment variables override the TOML values — this is how Docker Compose injects the container hostnames.
@@ -146,6 +149,7 @@ url = "redis://localhost:6379/0"
 | `[CourtListener]` | `api_token` | No | CourtListener token for Federal Circuit lookups |
 | `[database]` | `url` | Yes (worker) | PostgreSQL connection URL |
 | `[redis]` | `url` | Yes (worker/beat) | Redis connection URL |
+| `[limits]` | `cl_limit` | No | Max CourtListener API queries per run (omit for unlimited) |
 
 ## Automated pipeline (Celery)
 
@@ -266,6 +270,7 @@ uv run pytest -v                       # verbose output
 - **Federal Circuit appeals**: REST API v4, searched by case number then party names
 - **Authentication**: `api_token` under `[CourtListener]` in `settings.toml`
 - **Rate limit**: 1 request/second (enforced inside `CourtListenerClient`)
+- **Query cap**: set `[limits].cl_limit` to stop after N queries per run
 - **Optional**: omit the token or use `--no-courtlistener` to skip
 
 ## Troubleshooting
@@ -277,6 +282,8 @@ uv run pytest -v                       # verbose output
 **Worker can't connect to postgres/redis** — Confirm the services are running (`docker compose ps`) and that `DATABASE_URL` / `REDIS_URL` are set correctly.
 
 **Memory issues parsing large files** — Use `--limit` to process a subset, or disable CourtListener with `--no-courtlistener`.
+
+**CourtListener 502 errors** — The query URL is too long, usually because of malformed party names. Set `[limits].cl_limit` to cap queries per run while investigating.
 
 ## License
 

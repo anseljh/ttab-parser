@@ -78,6 +78,11 @@ Copy `settings-example.toml` to `settings.toml` and fill in values. The file is 
 |---|---|---|---|
 | `[USPTO]` | `api_key` | Yes (downloader) | USPTO Open Data Portal auth |
 | `[CourtListener]` | `api_token` | No | Federal Circuit appeal lookup |
+| `[database]` | `url` | Yes (worker) | PostgreSQL connection URL |
+| `[redis]` | `url` | Yes (worker/beat) | Redis connection URL |
+| `[limits]` | `cl_limit` | No | Max CourtListener API queries per run |
+
+`DATABASE_URL` and `REDIS_URL` environment variables override the TOML values (used by Docker Compose to inject container hostnames).
 
 Obtain USPTO API key at https://data.uspto.gov/myodp.
 
@@ -85,5 +90,7 @@ Obtain USPTO API key at https://data.uspto.gov/myodp.
 
 - Use `xml.etree.ElementTree` (not lxml) — `getparent()` is not available
 - The `is_opinion_document()` check in `src/utils.py` is the gating function for what gets parsed as an opinion; it checks decision codes first, then falls back to heuristics
-- XML element boolean evaluation bug: use `if elem is not None` not `if elem` (elements with no children evaluate to False)
+- XML element boolean evaluation bug: always use `if elem is not None` not `if elem` — childless elements (text-only nodes like `<name>ACME</name>`) evaluate to `False`, causing the element to be silently skipped
+- Party name extraction uses a direct-child scan (not `iter()`) for `<name>` inside `<party>` — `<proceeding-address>` also contains a `<name>` (attorney name) deeper in the tree that would otherwise be found first
 - The `parse` entry point defaults to `ttab_data/` as input directory; no argument needed for the standard workflow
+- Use f-strings for all log messages (not `%`-style formatting)
