@@ -291,8 +291,7 @@ class TTABParser:
             date_elem = find_element_by_tag(elem, field)
             if date_elem is not None:
                 date_str = extract_text_from_element(date_elem)
-                from src.utils import parse_date
-                opinion.filing_date = parse_date(date_str)
+                opinion.filing_date = parse_xml_date(date_str)
                 if opinion.filing_date:
                     break
 
@@ -302,8 +301,7 @@ class TTABParser:
             date_elem = find_element_by_tag(elem, field)
             if date_elem is not None:
                 date_str = extract_text_from_element(date_elem)
-                from src.utils import parse_date
-                opinion.decision_date = parse_date(date_str)
+                opinion.decision_date = parse_xml_date(date_str)
                 if opinion.decision_date:
                     break
         
@@ -317,8 +315,7 @@ class TTABParser:
                     if event_code and 'FINALDEC' in event_code.upper():
                         event_date = extract_text_from_element(find_element_by_tag(event, 'event-date'))
                         if event_date:
-                            from src.utils import parse_date
-                            opinion.decision_date = parse_date(event_date)
+                            opinion.decision_date = parse_xml_date(event_date)
                             break
     
     def _extract_parties(self, elem, opinion: TTABOpinion):
