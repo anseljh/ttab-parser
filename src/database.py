@@ -30,7 +30,7 @@ def get_engine() -> Engine:
                 "Set [database].url in settings.toml or the DATABASE_URL environment variable."
             )
         _engine = create_engine(url, pool_pre_ping=True)
-        logger.debug("SQLAlchemy engine created for %s", url)
+        logger.debug(f"SQLAlchemy engine created for {url}")
     return _engine
 
 

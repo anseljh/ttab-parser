@@ -115,13 +115,13 @@ def download_task(self, days: int = 1):
     """
     from src.ttab_downloader import TTABDownloader
 
-    logger.info("download_task started (days=%d)", days)
+    logger.info(f"download_task started (days={days})")
     try:
         downloader = TTABDownloader(output_dir="./ttab_data")
         count = downloader.download_recent_daily(days=days)
-        logger.info("download_task finished: %d file(s) downloaded", count)
+        logger.info(f"download_task finished: {count} file(s) downloaded")
     except Exception as exc:
-        logger.exception("download_task failed: %s", exc)
+        logger.exception(f"download_task failed: {exc}")
         raise self.retry(exc=exc)
 
     # Chain the remaining pipeline regardless of download count (files may
@@ -152,14 +152,14 @@ def parse_task(self):
                 # Commit in batches of 100 to limit memory usage
                 if upserted % 100 == 0:
                     session.commit()
-                    logger.debug("Committed batch (%d so far)", upserted)
+                    logger.debug(f"Committed batch ({upserted} so far)")
             session.commit()
         finally:
             session.close()
 
-        logger.info("parse_task finished: %d opinion(s) upserted", upserted)
+        logger.info(f"parse_task finished: {upserted} opinion(s) upserted")
     except Exception as exc:
-        logger.exception("parse_task failed: %s", exc)
+        logger.exception(f"parse_task failed: {exc}")
         raise self.retry(exc=exc)
 
 
@@ -232,7 +232,7 @@ def enrich_task(self):
         finally:
             session.close()
 
-        logger.info("enrich_task finished: %d opinion(s) enriched", enriched)
+        logger.info(f"enrich_task finished: {enriched} opinion(s) enriched")
     except Exception as exc:
-        logger.exception("enrich_task failed: %s", exc)
+        logger.exception(f"enrich_task failed: {exc}")
         raise self.retry(exc=exc)
