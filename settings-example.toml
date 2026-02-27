@@ -14,3 +14,7 @@ url = "postgresql://ttab:ttab@localhost:5432/ttab"
 [redis]
 # Redis connection URL. Override with REDIS_URL environment variable in Docker.
 url = "redis://localhost:6379/0"
+
+[limits]
+# Limit number of CourtListener API queries per invocation
+cl_limit = 10
