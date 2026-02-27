@@ -6,3 +6,11 @@ api_key = ""
 [CourtListener]
 # Optional. Required only for Federal Circuit appeal lookup.
 api_token = ""
+
+[database]
+# PostgreSQL connection URL. Override with DATABASE_URL environment variable in Docker.
+url = "postgresql://ttab:ttab@localhost:5432/ttab"
+
+[redis]
+# Redis connection URL. Override with REDIS_URL environment variable in Docker.
+url = "redis://localhost:6379/0"

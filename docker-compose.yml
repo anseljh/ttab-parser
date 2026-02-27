@@ -1,0 +1,48 @@
+services:
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ttab
+      POSTGRES_PASSWORD: ttab
+      POSTGRES_DB: ttab
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: uv run celery -A src.celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql://ttab:ttab@postgres:5432/ttab
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./ttab_data:/app/ttab_data
+      - ./settings.toml:/app/settings.toml:ro
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  beat:
+    build: .
+    command: uv run celery -A src.celery_app beat --loglevel=info
+    environment:
+      DATABASE_URL: postgresql://ttab:ttab@postgres:5432/ttab
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./settings.toml:/app/settings.toml:ro
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  pgdata:

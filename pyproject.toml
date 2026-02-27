@@ -6,12 +6,17 @@ build-backend = "hatchling.build"
 name = "ttab-toolkit"
 version = "0.1.0"
 description = "TTAB Opinion Analysis System - Download and analyze USPTO TTAB bulk data"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
     "pypdf2>=3.0.1",
     "pytest>=8.4.2",
     "pytest-mock>=3.15.1",
     "requests>=2.32.5",
+    "celery[redis]>=5.3",
+    "redis>=5.0",
+    "sqlalchemy>=2.0",
+    "psycopg2-binary>=2.9",
+    "alembic>=1.13",
 ]
 
 [project.scripts]
