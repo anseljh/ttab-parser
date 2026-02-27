@@ -1,488 +1,285 @@
 # TTAB Opinion Analysis System
 
-A Python application for downloading and analyzing Trademark Trial and Appeal Board (TTAB) opinion documents from the USPTO Open Data Portal. The system extracts structured information including parties, judges, case outcomes, and trademark, and optionally tracks Federal Circuit appeals.
+A Python toolkit for downloading and analyzing Trademark Trial and Appeal Board (TTAB) opinion documents from the USPTO Open Data Portal. The system extracts structured information including parties, judges, case outcomes, and trademark marks; optionally tracks Federal Circuit appeals; and can run fully automated on a schedule via Celery and Docker Compose.
 
 ## Features
 
-- **Data Download**: Automated bulk data download from USPTO Open Data Portal
-- **XML Parsing**: TTAB DTD-compliant XML document processing
-- **Data Extraction**: Comprehensive extraction of parties, judges, outcomes, and marks
-- **Appeal Tracking**: Optional Federal Circuit appeal matching via CourtListener API
-- **CSV Export**: Structured data export for analysis
-- **Smart Caching**: Duplicate detection and automatic ZIP extraction
-- **Parallel Processing**: Threaded extraction for improved performance
-- **Comprehensive Testing**: 76 unit tests ensuring code quality
+- **Scheduled automation**: Celery Beat triggers a daily download → parse → enrich pipeline without manual intervention
+- **PostgreSQL persistence**: Parsed opinions are upserted into a PostgreSQL database for querying
+- **Data download**: Bulk data download from the USPTO Open Data Portal
+- **XML parsing**: TTAB DTD-compliant XML document processing
+- **Data extraction**: Comprehensive extraction of parties, judges, outcomes, and marks
+- **Appeal tracking**: Optional Federal Circuit appeal matching via CourtListener API
+- **CSV export**: Structured data export for ad-hoc analysis
+- **Smart caching**: Duplicate detection and automatic ZIP extraction
+- **Parallel extraction**: Threaded ZIP extraction for improved throughput
+- **76 unit tests**: Comprehensive test coverage across all core modules
 
-## Installation
+## Quickstart (Docker)
+
+The simplest way to run the full pipeline is via Docker Compose:
+
+```bash
+# 1. Configure settings
+cp settings-example.toml settings.toml
+# Edit settings.toml — add USPTO api_key (and optionally CourtListener api_token)
+
+# 2. Start all services (Redis, Postgres, worker, beat scheduler)
+./bin/run.sh
+```
+
+`bin/run.sh` builds the images, starts the four services in the background, waits for each one to be healthy, then prints a ready message with connection strings and useful commands.
+
+The Beat scheduler will fire the pipeline daily at **06:00 UTC**. To trigger it immediately:
+
+```bash
+docker compose exec worker uv run celery -A src.celery_app call src.tasks.download_task --kwargs '{"days":1}'
+```
+
+To stop everything:
+
+```bash
+docker compose down
+```
+
+## Manual / CLI Usage
+
+The CLI commands work exactly as before — no Docker required.
 
 ### Prerequisites
 
-- Python 3.11+
-- USPTO API Key (free registration at [https://data.uspto.gov/myodp](https://data.uspto.gov/myodp))
+- Python 3.14+
+- [uv](https://github.com/astral-sh/uv) package manager
+- USPTO API key (free registration at [https://data.uspto.gov/myodp](https://data.uspto.gov/myodp))
 
 ### Setup
 
-1. **Clone or download this repository**
-
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Set up your API keys:**
-
-   Copy the example settings file:
-   ```bash
-   cp settings-example.toml settings.toml
-   ```
-
-   Edit `settings.toml` and add your API keys:
-   ```toml
-   [USPTO]
-   api_key = "your-uspto-api-key-here"
-
-   [CourtListener]
-   api_token = "your-courtlistener-token-here"
-   ```
-
-   **Note**: The CourtListener token is optional. If you don't need Federal Circuit appeal tracking, you can leave it empty.
-
-## Usage
-
-### Running Scripts
-
-Scripts read API keys from `settings.toml` automatically. Use `uv run` to invoke the shortcut commands:
-
 ```bash
-# Download recent files
-uv run download --recent 7
+# Install dependencies
+uv sync
 
-# Parse downloaded files (from default ttab_data directory)
-uv run parse
-
-# Or specify a custom directory
-uv run parse ./custom_data
+# Configure settings
+cp settings-example.toml settings.toml
+# Edit settings.toml and add your API keys
 ```
 
-**Alternative: full module path**
+### Downloader
+
 ```bash
-python -m src.ttab_downloader --recent 7
-python -m src.ttab_parser
+uv run download                    # recent 7 days (default)
+uv run download --recent 30        # last 30 days
+uv run download --all              # all current-year daily files
+uv run download --annual           # historical backfile (1951-2024)
+uv run download --force            # redownload existing files
+uv run download --verbose          # debug logging
 ```
-
-### TTAB Downloader
-
-The downloader fetches TTAB XML files from the USPTO Open Data Portal. It supports both daily (current year) and annual (historical) datasets.
-
-#### Basic Commands
-
-**Download recent files (last 7 days):**
-```bash
-uv run download --recent 7
-```
-
-**Download recent files (last 30 days):**
-```bash
-uv run download --recent 30
-```
-
-**Download all available daily files:**
-```bash
-uv run download --all
-```
-
-**Download annual/historical dataset (1951-2024):**
-```bash
-uv run download --annual
-```
-
-#### Advanced Options
-
-**Custom output directory:**
-```bash
-uv run download --output-dir ./my_data --recent 7
-```
-
-**Specify API key directly (overrides settings.toml):**
-```bash
-uv run download --api-key YOUR_API_KEY --recent 7
-```
-
-**Download specific year (daily dataset only):**
-```bash
-uv run download --year 2025 --all
-```
-
-**Force redownload of existing files:**
-```bash
-uv run download --force --recent 7
-```
-
-**Verbose logging:**
-```bash
-uv run download --verbose --recent 7
-```
-
-#### Downloader Options Summary
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--output-dir` | `-o` | Output directory for downloaded files (default: ./ttab_data) |
+| `--output-dir` | `-o` | Output directory (default: `./ttab_data`) |
 | `--api-key` | `-k` | USPTO API key (overrides settings.toml) |
-| `--year` | `-y` | Specific year to download (current year only, for daily dataset) |
-| `--recent` | `-r` | Download files from the last N days (default: 7) |
+| `--year` | `-y` | Specific year (current year only, daily dataset) |
+| `--recent` | `-r` | Download files from the last N days |
 | `--all` | `-a` | Download all available files from daily dataset |
 | `--annual` | | Download annual/historical dataset (1951-2024) |
 | `--force` | `-f` | Force redownload of existing files |
 | `--verbose` | `-v` | Enable verbose logging |
 
-#### Download Behavior
+### Parser
 
-- **Automatic ZIP extraction**: Downloads are automatically unzipped
-- **Parallel extraction**: ZIP files extract in separate threads while downloads remain sequential
-- **Smart duplicate detection**: Skips downloads if ZIP or extracted XML already exists
-- **Rate limiting**: 15-second delay between downloads (USPTO rate limit compliance)
-
-### TTAB Parser
-
-The parser processes TTAB XML files and extracts structured opinion data.
-
-#### Basic Commands
-
-**Parse downloaded files and create CSV (uses default ttab_data directory):**
 ```bash
-uv run parse
+uv run parse                       # parse ttab_data/ (default)
+uv run parse /path/to/xml/dir      # custom directory
+uv run parse --no-courtlistener    # skip Federal Circuit lookup
+uv run parse --limit 10            # process only 10 opinions
+uv run parse -o output.csv         # custom output file
+uv run parse --verbose             # debug logging
 ```
-
-**Parse from custom directory:**
-```bash
-uv run parse ./custom_data
-```
-
-**Specify custom output file:**
-```bash
-uv run parse --output my_results.csv
-```
-
-**Disable Federal Circuit appeal lookup:**
-```bash
-uv run parse --no-courtlistener
-```
-
-#### Advanced Options
-
-**Limit processing (for testing):**
-```bash
-uv run parse --limit 100
-```
-
-**Enable verbose logging:**
-```bash
-uv run parse --verbose
-```
-
-**Write logs to file:**
-```bash
-uv run parse --log-file parsing.log
-```
-
-**Combine options:**
-```bash
-uv run parse \
-  --output results_2025.csv \
-  --verbose \
-  --log-file parsing.log \
-  --limit 1000
-```
-
-#### Parser Options Summary
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `input_dir` | | Directory containing TTAB XML files (required) |
-| `--output` | `-o` | Output CSV file (default: ttab_opinions.csv) |
+| `input_dir` | | Directory containing TTAB XML files |
+| `--output` | `-o` | Output CSV file (default: `ttab_opinions.csv`) |
 | `--no-courtlistener` | | Disable Federal Circuit appeal lookup |
 | `--log-file` | | Path to log file (default: console only) |
 | `--verbose` | `-v` | Enable verbose logging |
-| `--limit` | | Limit number of opinions to process (for testing) |
+| `--limit` | | Limit number of opinions to process |
 
-## Complete Workflow Example
-
-Here's a typical workflow for downloading and analyzing TTAB data:
+### Typical CLI workflow
 
 ```bash
-# 1. Download recent TTAB data (last 30 days)
+# Download last 30 days
 uv run download --recent 30 --verbose
 
-# 2. Parse the downloaded files
+# Parse and export CSV
 uv run parse --output ttab_results.csv --verbose
 
-# 3. View the results
+# Inspect results
 head -n 20 ttab_results.csv
-```
-
-### Advanced Workflow with Historical Data
-
-```bash
-# 1. Download annual historical dataset
-uv run download --annual --output-dir ./ttab_historical
-
-# 2. Parse with Federal Circuit appeals disabled (faster)
-uv run parse ./ttab_historical \
-  --output historical_results.csv \
-  --no-courtlistener \
-  --verbose
-```
-
-## Output Data Structure
-
-The parser generates a CSV file with the following fields:
-
-- **Case Information**: case_number, proceeding_type, filing_date, decision_date
-- **Parties**: plaintiff_name, defendant_name, plaintiff_attorney, defendant_attorney
-- **Outcome**: outcome, prevailing_party
-- **Judges**: judges (comma-separated list)
-- **Marks**: challenged_marks, asserted_marks (semicolon-separated)
-- **Appeals**: appeal_indicated, federal_circuit_case_number, federal_circuit_outcome
-
-## Data Sources
-
-### USPTO Open Data Portal
-
-- **Daily Dataset (TTABTDXF)**: Current year daily XML files (2025+)
-- **Annual Dataset (TTABYR)**: Historical backfile (October 1951 - December 2024)
-- **API Endpoint**: `https://api.uspto.gov/api/v1/datasets/products/`
-- **Rate Limits**: 60 requests/min (standard), 4 requests/min (bulk files)
-
-### CourtListener API
-
-- **Federal Circuit Appeals**: REST API v4 for matching TTAB cases with appeals
-- **Authentication**: Requires `api_token` under `[CourtListener]` in `settings.toml`
-- **Optional**: Can be disabled with `--no-courtlistener` flag
-
-## Testing
-
-Run the comprehensive test suite:
-
-```bash
-# Run all tests
-pytest tests/
-
-# Run with verbose output
-pytest tests/ -v
-
-# Run specific test file
-pytest tests/test_downloader.py
-
-# Run with coverage report
-pytest tests/ --cov=src
-```
-
-### Test Coverage
-
-- **76 unit tests** covering all core modules:
-  - `tests/test_models.py` - Data classes, enums, validation (26 tests)
-  - `tests/test_utils.py` - Text cleaning, date parsing, XML handling (27 tests)
-  - `tests/test_downloader.py` - File detection, duplicate checking (11 tests)
-  - `tests/test_parser.py` - XML parsing, party mapping (13 tests)
-
-## Project Structure
-
-```
-.
-├── src/
-│   ├── ttab_downloader.py      # USPTO data download utility
-│   ├── ttab_parser.py           # XML parser and data extractor
-│   ├── models.py                # Data models and enums
-│   ├── utils.py                 # Utility functions
-│   └── courtlistener_client.py  # Federal Circuit API client
-├── tests/
-│   ├── test_downloader.py       # Downloader tests
-│   ├── test_parser.py           # Parser tests
-│   ├── test_models.py           # Model tests
-│   ├── test_utils.py            # Utility tests
-│   └── conftest.py              # Test fixtures
-├── ttab_data/                   # Downloaded XML files (created automatically)
-├── settings-example.toml        # Settings template
-├── settings.toml                # Your API keys (create from settings-example.toml, not committed)
-├── pytest.ini                   # Test configuration
-├── requirements.txt             # Python dependencies
-└── README.md                    # This file
 ```
 
 ## Configuration
 
-API keys are stored in `settings.toml` (gitignored). Copy `settings-example.toml` to get started:
+Copy `settings-example.toml` to `settings.toml` (gitignored) and fill in values.
 
-```bash
-cp settings-example.toml settings.toml
+```toml
+[USPTO]
+api_key = "your-uspto-api-key"
+
+[CourtListener]
+api_token = "your-courtlistener-token"   # optional
+
+[database]
+url = "postgresql://ttab:ttab@localhost:5432/ttab"
+
+[redis]
+url = "redis://localhost:6379/0"
 ```
 
-### Settings Reference
+`DATABASE_URL` and `REDIS_URL` environment variables override the TOML values — this is how Docker Compose injects the container hostnames.
+
+### Settings reference
 
 | Section | Key | Required | Description |
 |---------|-----|----------|-------------|
-| `[USPTO]` | `api_key` | **Yes** | USPTO Open Data Portal API key ([Get one here](https://data.uspto.gov/myodp)) |
-| `[CourtListener]` | `api_token` | No | CourtListener API token for Federal Circuit appeals |
+| `[USPTO]` | `api_key` | **Yes** (downloader) | USPTO Open Data Portal key |
+| `[CourtListener]` | `api_token` | No | CourtListener token for Federal Circuit lookups |
+| `[database]` | `url` | Yes (worker) | PostgreSQL connection URL |
+| `[redis]` | `url` | Yes (worker/beat) | Redis connection URL |
 
-## Rate Limits and Best Practices
+## Automated pipeline (Celery)
 
-### USPTO API Rate Limits
+The three pipeline stages run as Celery tasks and are chained on success:
 
-- **Standard API calls**: 60 requests per minute
-- **Bulk file downloads**: 4 requests per minute (enforced with 15-second delay)
+```
+download_task  →  parse_task  →  enrich_task
+```
 
-### Download Best Practices
+| Task | What it does |
+|------|-------------|
+| `download_task` | Calls `TTABDownloader.download_recent_daily()`, then chains the next two tasks |
+| `parse_task` | Calls `TTABParser.parse_directory()`, upserts each `TTABOpinion` into PostgreSQL |
+| `enrich_task` | Queries opinions where `federal_circuit_appeal_id IS NULL`, calls CourtListener, updates the FK |
 
-1. **Start small**: Test with `--recent 7` before downloading larger datasets
-2. **Use annual dataset for historical data**: More efficient than daily files
-3. **Monitor disk space**: Annual dataset files can exceed 100MB each
-4. **Check existing files**: System automatically skips duplicates
+Each task retries up to 3 times (60-second delay) on network/IO failures. Re-runs are idempotent — `case_number` is the upsert key for both opinion and appeal records.
 
-### Parsing Best Practices
+The worker calls `init_db()` on startup (via the `worker_ready` signal), which creates the database tables if they don't exist.
 
-1. **Test with --limit**: Use `--limit 100` to test parsing on a subset
-2. **Disable CourtListener for speed**: Use `--no-courtlistener` for faster parsing
-3. **Enable verbose logging**: Use `--verbose` to track progress on large datasets
-4. **Log to file**: Use `--log-file` to preserve detailed processing logs
+### Docker services
+
+| Service | Image | Role |
+|---------|-------|------|
+| `redis` | `redis:8-alpine` | Celery broker and result backend |
+| `postgres` | `postgres:17-alpine` | Persistent opinion storage |
+| `worker` | (built from `Dockerfile`) | Executes tasks from the queue |
+| `beat` | (built from `Dockerfile`) | Fires the daily schedule (exactly one instance) |
+
+Beat and worker are separate containers so that scaling worker replicas does not duplicate the scheduler.
+
+## Database schema
+
+Two tables, created automatically at worker startup:
+
+**`ttab_opinions`** — one row per TTAB opinion
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `case_number` | `varchar` | Unique, upsert key |
+| `proceeding_type` | `varchar` | opposition, cancellation, appeal, … |
+| `filing_date`, `decision_date` | `timestamp` | |
+| `outcome`, `winner` | `varchar` / `text` | |
+| `parties`, `judges`, `subject_marks`, `law_firms` | `jsonb` | Nested data |
+| `federal_circuit_appeal_id` | FK | Null until enriched |
+
+**`federal_circuit_appeals`** — one row per matched Federal Circuit case
+
+| Column | Type |
+|--------|------|
+| `case_number` | Unique, upsert key |
+| `case_name`, `citation`, `docket_number` | `text` |
+| `filing_date`, `decision_date` | `timestamp` |
+| `outcome`, `courtlistener_url`, `courtlistener_id` | `text` |
+| `judges` | `jsonb` |
+
+## Testing
+
+```bash
+uv run pytest                           # all tests
+uv run pytest -m "not integration"     # skip integration tests (no network)
+uv run pytest tests/test_models.py     # single file
+uv run pytest -k "test_parse_date"     # single test by name
+uv run pytest -v                       # verbose output
+```
+
+76 unit tests cover all core modules:
+
+| File | Tests | What's covered |
+|------|-------|----------------|
+| `tests/test_models.py` | 26 | Data classes, enums, validation |
+| `tests/test_utils.py` | 27 | Text cleaning, date parsing, XML handling |
+| `tests/test_downloader.py` | 11 | File detection, duplicate checking |
+| `tests/test_parser.py` | 13 | XML parsing, party mapping |
+
+## Project structure
+
+```
+.
+├── bin/
+│   └── run.sh                   # Start Docker services and wait for ready
+├── src/
+│   ├── ttab_downloader.py       # USPTO data download
+│   ├── ttab_parser.py           # XML parser and data extractor
+│   ├── courtlistener_client.py  # Federal Circuit API client
+│   ├── models.py                # Dataclasses and enums
+│   ├── utils.py                 # Utility functions
+│   ├── celery_app.py            # Celery app instance and Beat schedule
+│   ├── tasks.py                 # download_task, parse_task, enrich_task
+│   ├── database.py              # SQLAlchemy engine and session factory
+│   ├── db_models.py             # ORM models (TTABOpinionRecord, etc.)
+│   └── settings.py              # Settings loader (TOML + env var override)
+├── tests/
+│   ├── conftest.py
+│   ├── test_downloader.py
+│   ├── test_models.py
+│   ├── test_parser.py
+│   └── test_utils.py
+├── ttab_data/                   # Downloaded XML files (created automatically)
+├── Dockerfile                   # Worker and beat container image
+├── docker-compose.yml           # redis, postgres, worker, beat services
+├── pyproject.toml               # Dependencies and entry points
+├── settings-example.toml        # Settings template
+├── settings.toml                # Your API keys (gitignored — create from example)
+└── README.md
+```
+
+## Data sources
+
+### USPTO Open Data Portal
+
+- **Daily dataset (TTABTDXF)**: Current-year daily XML files
+- **Annual dataset (TTABYR)**: Historical backfile (October 1951 – December 2024)
+- **API endpoint**: `https://api.uspto.gov/api/v1/datasets/products/`
+- **Rate limits**: 60 req/min (standard), 4 req/min (bulk file downloads)
+
+### CourtListener API
+
+- **Federal Circuit appeals**: REST API v4, searched by case number then party names
+- **Authentication**: `api_token` under `[CourtListener]` in `settings.toml`
+- **Rate limit**: 1 request/second (enforced inside `CourtListenerClient`)
+- **Optional**: omit the token or use `--no-courtlistener` to skip
 
 ## Troubleshooting
 
-### Authentication Errors
+**`API access forbidden` / 403** — Set `api_key` under `[USPTO]` in `settings.toml`.
 
-**Problem**: `API access forbidden` or `403 Forbidden`
-```
-Solution: Set api_key under [USPTO] in settings.toml
-```
+**No XML files found** — Verify `ttab_data/` has files (`ls ttab_data/`); re-run the downloader with `--verbose`.
 
-### No Files Found
+**Worker can't connect to postgres/redis** — Confirm the services are running (`docker compose ps`) and that `DATABASE_URL` / `REDIS_URL` are set correctly.
 
-**Problem**: `No XML files found in directory`
-```
-Solution: 
-1. Verify files were downloaded: ls -la ./ttab_data
-2. Check download logs for errors
-3. Run downloader with --verbose flag
-```
-
-### Memory Issues
-
-**Problem**: Parser runs out of memory on large files
-```
-Solution:
-1. Process files in batches using --limit
-2. Disable CourtListener with --no-courtlistener
-3. Process one file at a time by creating subdirectories
-```
-
-### Rate Limit Errors
-
-**Problem**: `Too many requests` or rate limit warnings
-```
-Solution:
-1. System automatically handles rate limits with delays
-2. Wait a few minutes before retrying
-3. Check if you're running multiple download processes
-```
-
-
-## Technical Details
-
-### TTAB DTD Compliance
-
-The parser is fully compliant with USPTO TTAB XML DTD v1.0:
-- Root element: `<ttab-proceedings>`
-- Proceeding entries: `<proceeding-entry>`
-- Party information: `<party-information>` with role codes (P=Plaintiff, D=Defendant)
-- Date format: YYYYMMDD for filing-date and event-date elements
-- Proceeding numbers: Official formats (91=Opposition, 92=Cancellation, 70-74=Ex Parte Appeal)
-
-### TTAB Decision Identification
-
-The parser identifies TTAB decisions using prosecution-entry codes:
-
-**Valid Decision Codes:**
-- **802-849** (inclusive) - TTAB decision codes
-- **855-894** (inclusive) - TTAB decision codes  
-- **EXCLUDING 850-854** - Not decision codes
-
-**Example XML Structure:**
-```xml
-<proceeding-entry>
-  <prosecution-entry>
-    <code>870</code>  <!-- This indicates a TTAB decision -->
-  </prosecution-entry>
-</proceeding-entry>
-```
-
-**Fallback Method:**  
-For legacy data without prosecution-entry codes, the parser falls back to heuristics:
-- Document type keywords (opinion, decision, ruling, judgment)
-- Presence of judge information
-- Decision-making language in text content
-
-### Threading Model
-
-- **Downloads**: Sequential with 15-second delay (rate limit compliance)
-- **Extraction**: Parallel threads per ZIP file
-- **Main thread**: Waits for all extractions before completing
-
-### Duplicate Detection
-
-The system checks for both:
-1. Existing ZIP files (`[filename].zip`)
-2. Extracted XML files (`[filename].xml`)
-
-Use `--force` to override and redownload.
-
-## Contributing
-
-### Running Tests
-
-Before submitting changes, ensure all tests pass:
-
-```bash
-pytest tests/ -v
-```
-
-### Code Style
-
-- Follow PEP 8 guidelines
-- Use absolute imports (`from src.module import ...`)
-- Add type hints to function signatures
-- Document new functions with docstrings
+**Memory issues parsing large files** — Use `--limit` to process a subset, or disable CourtListener with `--no-courtlistener`.
 
 ## License
 
-This project is for research and educational purposes. TTAB data is public domain from the USPTO.
+Software license TBD.
 
-## Support
-
-For issues or questions:
-
-- **USPTO API Issues**: Visit [https://data.uspto.gov/myodp](https://data.uspto.gov/myodp)
-- **CourtListener API**: Visit [https://www.courtlistener.com/api/](https://www.courtlistener.com/api/)
-- **Project Issues**: Check project documentation or replit.md
-
-## Quick Reference Card
-
-### Most Common Commands
-
-```bash
-# ===== Setup =====
-cp settings-example.toml settings.toml
-# Edit settings.toml and add your USPTO api_key
-
-# ===== Download =====
-uv run download --recent 7
-uv run download --recent 30 --verbose
-uv run download --annual
-
-# ===== Parse =====
-uv run parse
-uv run parse --output results.csv --verbose
-uv run parse --limit 100
-
-# ===== Testing =====
-pytest tests/
-```
+TTAB data is public domain from the USPTO.
