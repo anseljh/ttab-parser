@@ -320,19 +320,74 @@ class CourtListenerClient:
         
         return None
     
+    def _load_from_db(self, ttab_opinion) -> Optional[FederalCircuitAppeal]:
+        """
+        Return a cached FederalCircuitAppeal from the database if one exists for
+        any of the TTAB opinion's case identifiers.  Returns None when the DB is
+        not configured, or when no cached record is found.
+        """
+        import src.settings as _settings_mod
+        db_url = _settings_mod.get("database", "url")
+        if not db_url:
+            return None
+
+        try:
+            from src.database import get_session
+            from src.db_models import FederalCircuitAppealRecord
+
+            session = get_session()
+            try:
+                case_ids = ttab_opinion.get_case_identifiers()
+                for case_id in case_ids:
+                    record: Optional[FederalCircuitAppealRecord] = (
+                        session.query(FederalCircuitAppealRecord)
+                        .filter_by(case_number=case_id)
+                        .first()
+                    )
+                    if record is not None:
+                        appeal = FederalCircuitAppeal()
+                        appeal.case_number = record.case_number
+                        appeal.case_name = record.case_name
+                        appeal.filing_date = record.filing_date
+                        appeal.decision_date = record.decision_date
+                        appeal.outcome = record.outcome
+                        appeal.citation = record.citation
+                        appeal.courtlistener_url = record.courtlistener_url
+                        appeal.courtlistener_id = record.courtlistener_id
+                        appeal.docket_number = record.docket_number
+                        appeal.judges = record.judges or []
+                        logger.debug(
+                            f"DB cache hit for case {case_id} — skipping CourtListener API call"
+                        )
+                        return appeal
+            finally:
+                session.close()
+        except Exception as exc:
+            logger.debug(f"DB cache lookup failed (non-fatal): {exc}")
+
+        return None
+
     def find_federal_circuit_appeal(self, ttab_opinion) -> Optional[FederalCircuitAppeal]:
         """
         Find Federal Circuit appeal for a TTAB opinion.
-        
+
+        Checks the local database cache first; only calls the CourtListener API
+        when no cached record is found.
+
         Args:
             ttab_opinion: TTABOpinion object
-            
+
         Returns:
             FederalCircuitAppeal: Found appeal or None
         """
         if not self.enabled:
             return None
-        
+
+        # Fast path: return cached result from DB without hitting the API
+        cached = self._load_from_db(ttab_opinion)
+        if cached is not None:
+            return cached
+
         # Strategy 1: Search by case number
         case_identifiers = ttab_opinion.get_case_identifiers()
         for case_id in case_identifiers:

@@ -8,6 +8,7 @@ including parties, judges, outcomes, and Federal Circuit appeal information.
 
 import argparse
 import csv
+import json
 import logging
 import os
 import re
@@ -33,22 +34,85 @@ from src.utils import (
 
 logger = logging.getLogger(__name__)
 
+STATE_FILENAME = ".parse_state.json"
+
+
+class ParseStateManager:
+    """
+    Tracks which XML files have already been fully parsed so subsequent runs
+    can skip them.  State is stored in a small JSON file next to the XML data
+    (``<input_dir>/.parse_state.json``).
+
+    Each entry records the file's mtime (float) and the number of opinions
+    extracted.  A file is considered *stale* (needs re-parse) when its
+    current mtime differs from the recorded value.
+    """
+
+    def __init__(self, input_dir: Path):
+        self._path = input_dir / STATE_FILENAME
+        self._state: dict = self._load()
+
+    def _load(self) -> dict:
+        if self._path.exists():
+            try:
+                with open(self._path, "r", encoding="utf-8") as fh:
+                    return json.load(fh)
+            except (json.JSONDecodeError, OSError) as exc:
+                logger.warning(f"Could not read parse state file, starting fresh: {exc}")
+        return {}
+
+    def _save(self):
+        try:
+            with open(self._path, "w", encoding="utf-8") as fh:
+                json.dump(self._state, fh, indent=2)
+        except OSError as exc:
+            logger.warning(f"Could not write parse state file: {exc}")
+
+    def already_parsed(self, xml_file: Path) -> bool:
+        """Return True if the file was previously parsed and has not changed."""
+        key = str(xml_file)
+        if key not in self._state:
+            return False
+        try:
+            current_mtime = xml_file.stat().st_mtime
+        except OSError:
+            return False
+        return abs(current_mtime - self._state[key]["mtime"]) < 0.001
+
+    def mark_parsed(self, xml_file: Path, opinions_count: int):
+        """Record that a file was successfully parsed."""
+        try:
+            mtime = xml_file.stat().st_mtime
+        except OSError:
+            return
+        self._state[str(xml_file)] = {"mtime": mtime, "opinions": opinions_count}
+        self._save()
+
+    def remove(self, xml_file: Path):
+        """Remove a file's entry (e.g. when forcing a re-parse)."""
+        self._state.pop(str(xml_file), None)
+        self._save()
+
 
 class TTABParser:
     """Parses TTAB XML files and extracts opinion data."""
     
-    def __init__(self, enable_courtlistener=True):
+    def __init__(self, enable_courtlistener=True, force=False):
         """
         Initialize the parser.
-        
+
         Args:
             enable_courtlistener (bool): Whether to enable Federal Circuit appeal lookup
+            force (bool): Re-parse files even if they appear in the parse-state cache
         """
         self.courtlistener_client = None
         if enable_courtlistener:
             self.courtlistener_client = CourtListenerClient()
-        
+
+        self.force = force
         self.stats = ProcessingStats()
+        # State manager is created lazily once we know the input directory
+        self._state_manager: Optional[ParseStateManager] = None
     
     def parse_directory(self, input_dir: Path) -> Generator[TTABOpinion, None, None]:
         """
@@ -73,16 +137,24 @@ class TTABParser:
         if not xml_files:
             logger.warning(f"No XML files found in {input_dir}")
             return
-        
+
+        self._state_manager = ParseStateManager(input_dir)
+
         logger.info(f"Found {len(xml_files)} XML files to process")
         self.stats.start_time = datetime.now()
-        
+
         for i, xml_file in enumerate(xml_files, 1):
+            # --- skip-if-already-parsed check ---
+            if not self.force and self._state_manager.already_parsed(xml_file):
+                logger.info(f"Skipping already-parsed file ({i}/{len(xml_files)}): {xml_file.name}")
+                self.stats.total_files_processed += 1
+                continue
+
             logger.info(f"Processing file {i}/{len(xml_files)}: {xml_file.name}")
-            
+
             try:
                 opinions = list(self.parse_file(xml_file))
-                
+
                 for opinion in opinions:
                     # Look up Federal Circuit appeal if enabled
                     if self.courtlistener_client and self.courtlistener_client.enabled:
@@ -95,16 +167,17 @@ class TTABParser:
                                 logger.info(f"Found Federal Circuit appeal for case {opinion.case_number}")
                         except Exception as e:
                             logger.error(f"Error looking up Federal Circuit appeal: {e}")
-                    
+
                     yield opinion
-                
+
                 self.stats.total_files_processed += 1
-                
+                self._state_manager.mark_parsed(xml_file, len(opinions))
+
             except Exception as e:
                 logger.error(f"Error processing file {xml_file}: {e}")
                 logger.debug(traceback.format_exc())
                 self.stats.errors += 1
-        
+
         self.stats.end_time = datetime.now()
     
     def parse_file(self, file_path: Path) -> Generator[TTABOpinion, None, None]:
@@ -764,7 +837,13 @@ def main():
         type=int,
         help="Limit number of opinions to process (for testing)"
     )
-    
+
+    parser.add_argument(
+        "--force", "-f",
+        action="store_true",
+        help="Re-parse files even if they are recorded in the parse-state cache"
+    )
+
     args = parser.parse_args()
     
     # Setup logging
@@ -777,7 +856,7 @@ def main():
         
         # Create parser
         enable_courtlistener = not args.no_courtlistener
-        parser = TTABParser(enable_courtlistener=enable_courtlistener)
+        parser = TTABParser(enable_courtlistener=enable_courtlistener, force=args.force)
         
         # Process files
         logger.info(f"Starting TTAB XML parsing from: {input_dir}")
