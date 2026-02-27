@@ -808,7 +808,32 @@ def main():
             logger.info(f"Export completed: {output_file}")
         else:
             logger.warning("No opinions found to export")
-        
+
+        # DB persistence (skipped if no database URL is configured)
+        import src.settings as _settings_mod
+        db_url = _settings_mod.get("database", "url")
+        if db_url:
+            from src.database import get_session, init_db
+            from src.persist import upsert_opinion
+            try:
+                init_db()
+                session = get_session()
+                upserted = 0
+                try:
+                    for opinion in opinions:
+                        upsert_opinion(session, opinion)
+                        upserted += 1
+                        if upserted % 100 == 0:
+                            session.commit()
+                    session.commit()
+                    logger.info(f"Upserted {upserted} opinion(s) to database")
+                finally:
+                    session.close()
+            except Exception as e:
+                logger.warning(f"Database write failed (CSV output unaffected): {e}")
+        else:
+            logger.debug("No database URL configured — skipping DB write")
+
         # Print statistics
         logger.info("=== Processing Statistics ===")
         logger.info(parser.stats.summary())

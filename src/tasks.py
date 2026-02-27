@@ -9,98 +9,15 @@ here.  Network/IO failures are retried up to 3 times with a 60-second delay.
 """
 
 import logging
-from dataclasses import asdict
 from pathlib import Path
 
 from celery import chain
 
 from src.celery_app import app
 from src.models import TTABOpinion, FederalCircuitAppeal
+from src.persist import opinion_to_jsonb, upsert_opinion, upsert_appeal
 
 logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _opinion_to_jsonb(opinion: TTABOpinion) -> dict:
-    """Serialize a TTABOpinion dataclass to a plain dict suitable for JSONB storage."""
-
-    def _serialize(obj):
-        if hasattr(obj, "__dataclass_fields__"):
-            return {k: _serialize(v) for k, v in asdict(obj).items()}
-        if hasattr(obj, "value"):          # Enum
-            return obj.value
-        if hasattr(obj, "isoformat"):      # datetime
-            return obj.isoformat()
-        if isinstance(obj, list):
-            return [_serialize(i) for i in obj]
-        if isinstance(obj, dict):
-            return {k: _serialize(v) for k, v in obj.items()}
-        return obj
-
-    return _serialize(opinion)
-
-
-def _upsert_opinion(session, opinion: TTABOpinion) -> "TTABOpinionRecord":  # noqa: F821
-    """Insert or update a TTABOpinionRecord, matched on case_number."""
-    from src.db_models import TTABOpinionRecord
-
-    record = (
-        session.query(TTABOpinionRecord)
-        .filter_by(case_number=opinion.case_number)
-        .first()
-    )
-    if record is None:
-        record = TTABOpinionRecord(case_number=opinion.case_number)
-        session.add(record)
-
-    record.proceeding_number = opinion.proceeding_number
-    record.proceeding_type = opinion.proceeding_type.value if opinion.proceeding_type else None
-    record.case_title = opinion.case_title
-    record.filing_date = opinion.filing_date
-    record.decision_date = opinion.decision_date
-    record.outcome = opinion.outcome.value if opinion.outcome else None
-    record.outcome_description = opinion.outcome_description
-    record.winner = opinion.winner
-    record.appeal_indicated = opinion.appeal_indicated
-    record.source_file = opinion.source_file
-
-    # Serialize nested lists to plain-dict JSONB
-    serialized = _opinion_to_jsonb(opinion)
-    record.parties = serialized.get("parties")
-    record.judges = serialized.get("judges")
-    record.subject_marks = serialized.get("subject_marks")
-    record.law_firms = serialized.get("law_firms")
-
-    return record
-
-
-def _upsert_appeal(session, appeal: FederalCircuitAppeal) -> "FederalCircuitAppealRecord":  # noqa: F821
-    """Insert or update a FederalCircuitAppealRecord, matched on case_number."""
-    from src.db_models import FederalCircuitAppealRecord
-
-    record = (
-        session.query(FederalCircuitAppealRecord)
-        .filter_by(case_number=appeal.case_number)
-        .first()
-    )
-    if record is None:
-        record = FederalCircuitAppealRecord(case_number=appeal.case_number)
-        session.add(record)
-
-    record.case_name = appeal.case_name
-    record.filing_date = appeal.filing_date
-    record.decision_date = appeal.decision_date
-    record.outcome = appeal.outcome
-    record.citation = appeal.citation
-    record.courtlistener_url = appeal.courtlistener_url
-    record.courtlistener_id = appeal.courtlistener_id
-    record.docket_number = appeal.docket_number
-    record.judges = appeal.judges  # list of strings — already JSON-serializable
-
-    return record
-
 
 # ---------------------------------------------------------------------------
 # Tasks
@@ -147,7 +64,7 @@ def parse_task(self):
         upserted = 0
         try:
             for opinion in parser.parse_directory(Path("ttab_data")):
-                _upsert_opinion(session, opinion)
+                upsert_opinion(session, opinion)
                 upserted += 1
                 # Commit in batches of 100 to limit memory usage
                 if upserted % 100 == 0:
@@ -219,7 +136,7 @@ def enrich_task(self):
                 if appeal is None:
                     continue
 
-                appeal_record = _upsert_appeal(session, appeal)
+                appeal_record = upsert_appeal(session, appeal)
                 session.flush()  # get appeal_record.id before assigning FK
                 record.federal_circuit_appeal_id = appeal_record.id
                 session.commit()
