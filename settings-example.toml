@@ -17,4 +17,4 @@ url = "redis://localhost:6379/0"
 
 [limits]
 # Limit number of CourtListener API queries per invocation
-cl_limit = 10
+# cl_limit = 10
