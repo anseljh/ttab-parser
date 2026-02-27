@@ -19,13 +19,14 @@ services:
 
   worker:
     build: .
-    command: uv run celery -A src.celery_app worker --loglevel=info
+    command: uv run watchmedo auto-restart --directory=./src --pattern='*.py' --recursive -- celery -A src.celery_app worker --loglevel=info
     environment:
       DATABASE_URL: postgresql://ttab:ttab@postgres:5432/ttab
       REDIS_URL: redis://redis:6379/0
     volumes:
       - ./ttab_data:/app/ttab_data
       - ./settings.toml:/app/settings.toml:ro
+      - ./src:/app/src
     depends_on:
       - redis
       - postgres
