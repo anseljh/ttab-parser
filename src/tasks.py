@@ -110,11 +110,10 @@ def enrich_task(self):
                 .filter(TTABOpinionRecord.federal_circuit_appeal_id.is_(None))
                 .all()
             )
-            logger.info(
-                "enrich_task: %d opinion(s) pending enrichment", len(unenriched)
-            )
+            total = len(unenriched)
+            logger.info(f"enrich_task: {total} opinion(s) pending enrichment")
 
-            for record in unenriched:
+            for checked, record in enumerate(unenriched, 1):
                 # Reconstruct a minimal TTABOpinion for the CourtListener lookup
                 opinion = TTABOpinion(
                     case_number=record.case_number,
@@ -134,6 +133,8 @@ def enrich_task(self):
 
                 appeal = client.find_federal_circuit_appeal(opinion)
                 if appeal is None:
+                    if checked % 50 == 0:
+                        logger.info(f"enrich_task: checked {checked}/{total}, {enriched} match(es) so far")
                     continue
 
                 appeal_record = upsert_appeal(session, appeal)
@@ -141,10 +142,8 @@ def enrich_task(self):
                 record.federal_circuit_appeal_id = appeal_record.id
                 session.commit()
                 enriched += 1
-                logger.debug(
-                    "Enriched opinion %s with appeal %s",
-                    record.case_number,
-                    appeal.case_number,
+                logger.info(
+                    f"enrich_task: matched {record.case_number} → appeal {appeal.case_number} ({enriched} total)"
                 )
         finally:
             session.close()
