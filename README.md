@@ -1,3 +1,7 @@
+I'm abandoning this project because the USPTO TTAB Reading Room is a better way to get opinions.
+
+---
+
 # TTAB Toolkit
 
 A Python toolkit for downloading and analyzing Trademark Trial and Appeal Board (TTAB) opinion documents from the USPTO Open Data Portal. The system extracts structured information including parties, judges, case outcomes, and trademark marks; optionally tracks Federal Circuit appeals; and can run fully automated on a schedule via Celery and Docker Compose.
